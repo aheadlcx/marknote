@@ -38,3 +38,10 @@ function mountAndroid { hdiutil attach ~/android.dmg -mountpoint /Volumes/androi
 # unmount the android file image
 function umountAndroid() { hdiutil detach /Volumes/android; }
 装载 android 存储卷后，您将在其中开展所有工作。您可以像对待外接式存储盘一样将其弹出（卸载）。
+
+
+
+log file navigator
+lnav
+
+An advanced log file viewer for the small-scale
