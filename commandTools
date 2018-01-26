@@ -1,0 +1,19 @@
+ag：比grep、ack更快的递归搜索文件内容。
+tig：字符模式下交互查看git项目，可以替代git命令。
+fzf：命令行下模糊搜索工具，能够交互式智能搜索并选取文件或者内容，配合终端ctrl-r历史命令搜索简直完美。
+PathPicker(fpp):在命令行输出中自动识别目录和文件，支持交互式，配合git非常有用。
+运行以下命令：
+
+axel：多线程下载工具，下载文件时可以替代curl、wget。
+
+cloc：代码统计工具，能够统计代码的空行数、注释行、编程语言。
+
+icdiff：分屏显示 diff
+
+sdkman 管理各种 SDK 
+
+Graphviz 可以将文本转成图表，如
+Pandoc 可以将 markdown 转成各式各样的格式：PDF、DOCX、EPUB、MOBI
+
+httpie 网络请求工具
+jq，命令行的json查询和格式化工具，适合查看rest接口的输出
