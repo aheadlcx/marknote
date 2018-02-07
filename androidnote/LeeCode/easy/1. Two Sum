@@ -1,0 +1,51 @@
+1. Two Sum
+Given an array of integers, return indices of the two numbers such that they add up to a specific target.
+
+You may assume that each input would have exactly one solution, and you may not use the same element twice.
+
+Example:
+Given nums = [2, 7, 11, 15], target = 9,
+
+Because nums[0] + nums[1] = 2 + 7 = 9,
+return [0, 1].
+
+My Answer is right as follow:
+
+
+````java
+class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        if(nums == null){
+            return null;
+        }
+        int len = nums.length;
+        Map<Integer, Integer> tempMap = new HashMap<Integer, Integer>();
+        for(int i = 0; i < len ; i++){
+            int tempDiff = target - nums[i];
+            if(tempDiff * 2 == target){
+                //刚好是 target 的2分之一
+                Integer earlyIndex = tempMap.get(tempDiff);
+                if(earlyIndex == null){
+                    tempMap.put(tempDiff, i);
+                    continue;
+                }
+                int[] result = new int[2];
+                result[0] = tempMap.get(tempDiff);
+                result[1] = i;
+                return result;
+            }
+            for(Integer key: tempMap.keySet()){
+                if(key + tempDiff == target){
+                    int[] result = new int[2];
+                    result[0] = tempMap.get(target - tempDiff);
+                    result[1] = i;
+                    return result;
+                }
+            }
+            tempMap.put(tempDiff, i);
+            
+        }
+        return null;
+    }
+}
+````
