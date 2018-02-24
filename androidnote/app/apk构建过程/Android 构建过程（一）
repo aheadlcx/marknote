@@ -1,0 +1,43 @@
+aapt package -f -m -J ./test/ -S ./app/src/main/res/ -M ./app/src/main/AndroidManifest.xml -I ${Android_SDK_HONME}/platforms/android-26/android.jar
+
+
+/Users/apple/Library/Android/sdk
+/Users/apple/Library/Android/sdk/build-tools/26.0.2
+/Users/apple/mycode/androidFile/github/HookApp
+/Users/apple/Library/Android/sdk/build-tools/26.0.2/dx
+
+
+
+编译资源，生成R文件
+./aapt package -f -m -J ./test/ -S ./app/src/main/res/ -M ./app/src/main/AndroidManifest.xml -I "${Android_SDK_HONME}/platforms/android-26/android.jar"
+编译源码和R文件为 class
+javac -source 1.6 -target 1.6 -bootclasspath "/Users/apple/Library/Android/sdk/platforms/android-26/android.jar" -d ./outclass/ ./app/src/main/java/**/*.java ./test/me/aheadlcx/hookapp/R.java
+
+编译 class 文件为 dex 文件
+/Users/apple/Library/Android/sdk/build-tools/26.0.2/dx --dex --output=./outclass/outclass.dex ./outclass/
+重新编译资源文件，生成 ap_ 文件，包含 res 和 资源表 resouces.arsc
+./aapt package -f -S ./app/src/main/res/ -M /Users/apple/mycode/androidFile/github/HookApp/app/src/main/AndroidManifest.xml -I "${Android_SDK_HONME}/platforms/android-26/android.jar" -F ./outclass/resouces.ap_
+
+生成未签名APK
+java -cp ./sdklib.jar com.android.sdklib.build.ApkBuilderMain hello.apk -v -u -z ./outclass/resouces.ap_ -f ./outclass/outclass.dex -rf ./app/src/main/java/
+
+签名
+jarsigner -verbose -keystore ./aheadlcx.keystore -signedjar ./signed.apk ./hello.apk aheadlcx
+
+https://www.jianshu.com/p/85c8ce13fcad?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation
+https://www.jianshu.com/p/2a7474ee3527?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation
+
+aapt 执行了2次，编译资源
+1. 第一次生成了 R 文件。
+2. 第二次，生成了 ap_ 文件。
+
+二进制XML
+1. 体积小，字符串被统一到一个字符串资源池，并且去重。改用索引。
+2. 解析快，没有了字符串，提高了速度。
+
+打包中最后一步，zipalign 对齐
+1. 加快访问资源的速度，每一个资源都是上一个资源的4n个字节，访问下一个资源，就不用遍历，判断4n字节判断是不是下一个资源就可以，类似资源数组，并且链表。
+
+通过 R 文件找到资源
+1. R 文件 id ，4个字节，packageId + TypeId +  2 * entryId
+2. R id ,对应资源表中的 key ，value 就是资源在apk中的路径。
