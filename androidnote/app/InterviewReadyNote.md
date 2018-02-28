@@ -5,13 +5,16 @@
 + 线性安全
 + http & https
 + New Android Version Feature
-+ 容器 SparseArray和ArrayMap代替HashMap
-+ ANR 的定位 undo 
-+ OOM 的定位 undo
-+ 性能优化工具的使用 undo
++ 容器 SparseArray 和 ArrayMap 代替HashMap
++ ANR 的定位 
++ OOM 的定位 
++ 性能优化工具的使用 
 + Glide 图片加载 undo
 + 进程的同步
 + apk 瘦身
++ 热修复-阿里热修复手册
++ 插件化-small undo
++ IPC undo
 
 #### java GC 内存原理
 [杰风居-理解java垃圾回收机制](http://jayfeng.com/2016/03/11/%E7%90%86%E8%A7%A3Java%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/)
@@ -52,6 +55,9 @@ java内存模型
 + ArrayMap ，采用2个数组来储存。一个 key 的 hash 数组，一个是 key 和 value ，依次排序的数组。查找 key 是，二分法。
 
 数组的大小，没有多余，因此省了内存。 SparseArray 和 ArrayMap 的 key ，在数据量少的时候，查找快。数据量大的时候，反而会降低大概50%。
+
+#### ANR 的定位
+adb pull /data/anr/traces.txt 再定位
 
 #### apk 瘦身
 [爱奇艺瘦身](https://juejin.im/entry/59cdbbd06fb9a00a59597c4b)
