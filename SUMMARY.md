@@ -6,3 +6,8 @@
 
 * APP 性能优化
 	* [Android优化 From Jack](https://blog.dreamtobe.cn/2015/10/26/android_optimize/)
+
+* apk 瘦身
+	* [app瘦身](/androidnote/app/thinApk.md)
+
+	
