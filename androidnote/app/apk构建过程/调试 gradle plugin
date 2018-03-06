@@ -1,0 +1,4 @@
+./gradlew buildBundle -Dorg.gradle.daemon=false #!important, disable daemon mode
+
+export GRADLE_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+GRADLE_OPTS
