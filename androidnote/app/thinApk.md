@@ -45,3 +45,7 @@ jarsigner是针对每个文件进行了签名，然后针对签名后的文件�
 ### 总结
 + webP 转化要注意资源拼接。
 + 使用apksigner签名工具前，必须先执行zipalign操作；而使用jarsigner签名工具则是先签名，然后再用zipalign优化。
+
+## APK 搜身的第三方工具
+	
+	+ [安装包立减1M--微信Android资源混淆打包工具](https://cloud.tencent.com/developer/article/1030753)  注意点，linux与mac的7z效果更好
