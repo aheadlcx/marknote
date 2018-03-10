@@ -12,5 +12,3 @@
 webSetting.setMixedContentMode(webSetting.getMixedContentMode()); 
  }  
  ````
-
- 	* 
