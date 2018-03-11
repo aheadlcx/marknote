@@ -11,6 +11,7 @@
 + png 图片
 + 代码方面
 + libs 方面
++ 限制语言资源
 
 
 ### 使用apksigner签名
@@ -41,6 +42,17 @@ jarsigner是针对每个文件进行了签名，然后针对签名后的文件�
 ### lib 方面
 + 仅仅保留主流框架，x86 考虑不支持。仅保留 armeabi 一套。
 + so 的插件化，例如 RN 的。
+
+### 限制语言资源
+
+````java
+android {
+	defaultConfig {
+	...
+	resConfigs "en","fr"
+	}
+}
+````
 
 ### 总结
 + webP 转化要注意资源拼接。
