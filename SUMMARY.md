@@ -15,6 +15,9 @@
 * 插件化相关
 	* [插件化](/androidnote/app/plugins.md)
 
+* 组件化
+	* [组件化](/androidnote/app/componet.md)
+
 * WebView 优化
 	* [webview 劫持](/androidnote/app/httpdns.md)
 	* [webview优化](/androidnote/app/webview.md)
