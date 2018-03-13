@@ -25,8 +25,9 @@
 * Interview 总结
 	* [面试总结](/androidnote/app/interview/interviewNote.md)
 
-* undo
-	* 插件化
-	* 无痕埋点技术
-	* IPC
-	* React Native 简单的原理
+* [跨进程通讯](/androidnote/common/ipc.md)
+
+* Java Base Knowledge
+	* [Java Reflection 为何慢](/javanote/reflection.md)
+* [Android Base 知识点](/androidnote/app/androidbase.md)
+* [undo][/androidnote/todo.md]
