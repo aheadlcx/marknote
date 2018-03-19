@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<!-- saved from url=(0182)http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=10,IE=9,IE=8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/favicon.ico" type="image/x-icon">
+<title>Android逆向之旅—解析编译之后的Resource.arsc文件格式 | 尼古拉斯.赵四</title>
+<script src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/hm.js"></script><script>
+window._deel = {name: '尼古拉斯.赵四',url: 'http://www.wjdiankong.cn/wp-content/themes/yusi1.0', ajaxpager: 'on', commenton: 1, roll: [,]}
+</script>
+
+<!-- All in One SEO Pack 2.3.4.2 by Michael Torbert of Semper Fi Web Design[305,412] -->
+<meta name="description" itemprop="description" content="一、前言 快过年了，先提前祝贺大家新年快乐，这篇文章也是今年最后一篇了。今天我们继续来看逆向的相关知识，前篇文章中我们介绍了如何解析Android中编译之后的AndroidManifest.xml文件格式：点击进入 当时我说到其实后续还要继续介绍两个文件一个是resource.arsc和classes.dex，">
+
+<link rel="canonical" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<!-- /all in one seo pack -->
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/www.wjdiankong.cn\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.5.1"}};
+			!function(a,b,c){function d(a){var c,d,e,f=b.createElement("canvas"),g=f.getContext&&f.getContext("2d"),h=String.fromCharCode;if(!g||!g.fillText)return!1;switch(g.textBaseline="top",g.font="600 32px Arial",a){case"flag":return g.fillText(h(55356,56806,55356,56826),0,0),f.toDataURL().length>3e3;case"diversity":return g.fillText(h(55356,57221),0,0),c=g.getImageData(16,16,1,1).data,d=c[0]+","+c[1]+","+c[2]+","+c[3],g.fillText(h(55356,57221,55356,57343),0,0),c=g.getImageData(16,16,1,1).data,e=c[0]+","+c[1]+","+c[2]+","+c[3],d!==e;case"simple":return g.fillText(h(55357,56835),0,0),0!==g.getImageData(16,16,1,1).data[0];case"unicode8":return g.fillText(h(55356,57135),0,0),0!==g.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel="stylesheet" id="wp-recentcomments-css" href="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/wp-recentcomments.css" type="text/css" media="screen">
+<link rel="stylesheet" id="style-css" href="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/style.css" type="text/css" media="all">
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/jquery.min.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/jquery.js"></script>
+<link rel="https://api.w.org/" href="http://www.wjdiankong.cn/wp-json/">
+<link rel="prev" title="Android逆向之旅—解析编译之后的AndroidManifest文件格式" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84androidmanifest%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<link rel="next" title="Android逆向之旅—解析编译之后的Dex文件格式" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<link rel="shortlink" href="http://www.wjdiankong.cn/?p=577">
+<link rel="alternate" type="application/json+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e9%2580%2586%25e5%2590%2591%25e4%25b9%258b%25e6%2597%2585-%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584resource-arsc%25e6%2596%2587%25e4%25bb%25b6%25e6%25a0%25bc%25e5%25bc%258f%2F">
+<link rel="alternate" type="text/xml+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e9%2580%2586%25e5%2590%2591%25e4%25b9%258b%25e6%2597%2585-%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584resource-arsc%25e6%2596%2587%25e4%25bb%25b6%25e6%25a0%25bc%25e5%25bc%258f%2F&amp;format=xml">
+<meta name="keywords" content="Android技术篇, 安全和逆向">
+<meta name="description" content="一、前言 快过年了，先提前祝贺大家新年快乐，这篇文章也是今年最后一篇了。今天我们继续来看逆向的相关知识，前篇文章中我们介绍了如何解析Android中编译之后的AndroidManifest.xml文件格式：点击进入  当时我说到其实后续还要继续介绍两个文件一个是resource.arsc和classes.dex，今天我们就来看看resource.arsc文件个格式解析，classes.dex的解析要等年后了。 二、准备工作 我们在使用a">
+<!--[if lt IE 9]><script src="http://www.wjdiankong.cn/wp-content/themes/yusi1.0/js/html5.js"></script><![endif]-->
+<script src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/share.js"></script><link href="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/share.css" rel="styleSheet" type="text/css"></head>
+<body class="single single-post postid-577 single-format-standard">
+
+<header id="header" class="header">
+<div class="container-inner">
+ <div class="yusi-logo">
+                    <a href="http://www.wjdiankong.cn/">
+                        <h1>
+                                                        <span class="yusi-mono">尼古拉斯.赵四</span>
+                                                        <span class="yusi-bloger">生死看淡，不服就干！</span>
+                                                    </h1>
+                    </a>
+    </div>
+</div>
+
+	<div id="nav-header" class="navbar fixed">
+		
+		<ul class="nav">
+			<li id="menu-item-636" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-636"><a href="http://www.wjdiankong.cn/">首页</a></li>
+<li id="menu-item-637" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-637"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a></li>
+<li id="menu-item-904" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-904"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a></li>
+<li id="menu-item-642" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-642"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a></li>
+<li id="menu-item-638" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-638"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a></li>
+<li id="menu-item-639" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-639"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a></li>
+<li id="menu-item-640" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-640"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a></li>
+<li id="menu-item-641" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-641"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a></li>
+<li id="menu-item-841" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-841"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a></li>
+<li id="menu-item-949" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-949"><a href="http://www.wjdiankong.cn/category/python/">Python</a></li>
+<li style="float:right;">
+                    <div class="toggle-search"><i class="fa fa-search"></i></div>
+<div class="search-expand" style="display: none;"><div class="search-expand-inner"><form method="get" class="searchform themeform" onsubmit="location.href=&#39;http://www.wjdiankong.cn/search/&#39; + encodeURIComponent(this.s.value).replace(/%20/g, &#39;+&#39;); return false;" action="http://www.wjdiankong.cn/"><div> <input type="ext" class="search" name="s" onblur="if(this.value==&#39;&#39;)this.value=&#39;search...&#39;;" onfocus="if(this.value==&#39;search...&#39;)this.value=&#39;&#39;;" value="search..."></div></form></div></div>
+</li>
+		</ul><div class="screen-mini"><button data-type="screen-nav" class="btn btn-inverse screen-nav"><i class="fa fa-list"></i></button></div>
+	</div>
+	
+</header>
+<section class="container"><div class="speedbar">
+					<div class="pull-right">
+				<i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/wp-login.php">登录</a>			</div>
+				<div class="toptip"><strong class="text-success"><i class="fa fa-volume-up"></i> </strong> 关注微信公众号：“<font color="#FF666A"><b>编码美丽</b></font>”技术干货实时推荐，欢迎访问我的github：<a href="https://github.com/fourbrother">点击进入</a></div>
+	</div>
+	<div class="content-wrap">
+	<div class="content">
+
+				<header class="article-header">
+			<h1 class="article-title"><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">Android逆向之旅—解析编译之后的Resource.arsc文件格式</a></h1>
+			<div class="meta">
+				<span id="mute-category" class="muted"><i class="fa fa-list-alt"></i><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/"> Android技术篇</a></span>				<span class="muted"><i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/author/jiangwei212/">尼古拉斯.赵四</a></span>
+				<time class="muted"><i class="fa fa-clock-o"></i> 2年前 (2016-05-12)</time>
+				<span class="muted"><i class="fa fa-eye"></i> 9209℃</span>
+				<span class="muted"><i class="fa fa-comments-o"></i> <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#comments">0评论</a></span>							</div>
+		</header>
+		<article class="article-content">
+			<h1><span class="Apple-style-span">一、前言</span></h1>
+<p><span class="Apple-style-span">快过年了，先提前祝贺大家新年快乐，这篇文章也是今年最后一篇了。今天我们继续来看逆向的相关知识，前篇文章中我们介绍了如何解析Android中编译之后的AndroidManifest.xml文件格式：<a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84androidmanifest%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title="">点击进入</a></span></p>
+<p><span class="Apple-style-span">当时我说到其实后续还要继续介绍两个文件一个是resource.arsc和classes.dex，今天我们就来看看resource.arsc文件个格式解析，classes.dex的解析要等年后了。</span></p>
+<h1><span class="Apple-style-span">二、准备工作</span></h1>
+<p><span class="Apple-style-span">我们在使用apktool工具进行反编译的时候，会发现有一个：<span class="Apple-style-span">res/values/public.xml</span>这个文件：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203123333951" alt="" width="400" height="115"><br>
+</span></p>
+<p><span class="Apple-style-span">我们查看一下public.xml文件内容：</span></p>
+<p><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203123428229" alt="" width="490" height="400"></p>
+<p><span class="Apple-style-span">看到了，这个文件就保存了apk中所有的类型和对应的id值，我们看到这里面的每个条目内容都是：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">type：类型名</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">name：资源名</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">id：资源的id</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">类型的话有这么几种：</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">drawable，menu，layout，string，attr，color，style等</span></span></p>
+<p><span class="Apple-style-span">所以我们会在反编译之后的文件夹中看到这几个类型的文件xml内容。</span></p>
+<p><span class="Apple-style-span">上面我们介绍了如何使用apktool反编译之后的内容，下面我们要做的事情就是如何来解析resource.arsc文件，解析出这些文件。</span></p>
+<p><span class="Apple-style-span">我们解压一个apk得到对应的resource.arsc文件。按照国际惯例，每个文件的格式描述都是有对应的数据结构的，resource也不例外：<span class="Apple-style-span">frameworks\base\include\androidfw\ResourceTypes.h</span>，这就是resource中定义的所有数据结构。</span></p>
+<p><span class="Apple-style-span">下面再来看一张神图：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203162759825" alt="" width="850" height="900"><br>
+</span></p>
+<p><span class="Apple-style-span">每次我们在解析文件的时候都会有一张神图，我们按照这张图来进行数据解析工作。</span></p>
+<h1><span class="Apple-style-span">三、数据结构定义</span></h1>
+<p><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203132127110" alt="" width="209" height="311"></p>
+<p><span class="Apple-style-span">这个是项目工程结构，我们看到定义了很多的数据结构</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第一、头部信息</span></span></h2>
+<p><span class="Apple-style-span">Resources.arsc文件格式是由一系列的chunk构成,每一个chunk均包含如下结构的ResChunk_header,用来描述这个chunk的基本信息</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+import com.wjdiankong.parseresource.Utils;
+
+/**
+struct ResChunk_header
+{
+    // Type identifier for this chunk.  The meaning of this value depends
+    // on the containing chunk.
+    uint16_t type;
+
+    // Size of the chunk header (in bytes).  Adding this value to
+    // the address of the chunk allows you to find its associated data
+    // (if any).
+    uint16_t headerSize;
+
+    // Total size of this chunk (in bytes).  This is the chunkSize plus
+    // the size of any data associated with the chunk.  Adding this value
+    // to the chunk allows you to completely skip its contents (including
+    // any child chunks).  If this value is the same as chunkSize, there is
+    // no data associated with the chunk.
+    uint32_t size;
+};
+ * @author i
+ *
+ */
+public class ResChunkHeader {
+	
+	public short type;
+	public short headerSize;
+	public int size;
+	
+	public int getHeaderSize(){
+		return 2+2+4;
+	}
+	
+	@Override
+	public String toString(){
+		return "type:"+Utils.bytesToHexString(Utils.int2Byte(type))+",headerSize:"+headerSize+",size:"+size;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">type：是当前这个chunk的类型</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">headerSize：是当前这个chunk的头部大小</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">size：是当前这个chunk的大小</span></span></span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第二、资源索引表的头部信息</span></span></h2>
+<p><span class="Apple-style-span">Resources.arsc文件的第一个结构是资源索引表头部。其结构如下,描述了Resources.arsc文件的大小和资源包数量。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+struct ResTable_header
+{
+    struct ResChunk_header header;
+
+    // The number of ResTable_package structures.
+    uint32_t packageCount;
+};
+ * @author i
+ *
+ */
+public class ResTableHeader {
+
+	public ResChunkHeader header;
+	public int packageCount;
+	
+	public ResTableHeader(){
+		header = new ResChunkHeader();
+	}
+	
+	public int getHeaderSize(){
+		return header.getHeaderSize() + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "header:"+header.toString()+"\n" + "packageCount:"+packageCount;
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">header：就是标准的Chunk头部信息格式</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">packageCount：被编译的资源包的个数</span></span></span></p>
+<p><span class="Apple-style-span">Android中一个apk可能包含多个资源包，默认情况下都只有一个就是应用的包名所在的资源包</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span">图中蓝色高亮的部分就是资源索引表头部。通过解析,我们可以得到如下信息,这个chunk的类型为RES_TABLE_TYPE,头部大小为0XC,整个chunk的大小为1400252byte,有一个编译好的资源包。</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203140621080" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第三、资源项的值字符串资源池</span></span></h2>
+<p><span class="Apple-style-span">紧跟着资源索引表头部的是资源项的值字符串资源池,这个字符串资源池包含了所有的在资源包里面所定义的资源项的值字符串,字符串资源池头部的结构如下。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+struct ResStringPool_header
+{
+    struct ResChunk_header header;
+
+    // Number of strings in this pool (number of uint32_t indices that follow
+    // in the data).
+    uint32_t stringCount;
+
+    // Number of style span arrays in the pool (number of uint32_t indices
+    // follow the string indices).
+    uint32_t styleCount;
+
+    // Flags.
+    enum {
+        // If set, the string index is sorted by the string values (based
+        // on strcmp16()).
+        SORTED_FLAG = 1&lt;&lt;0,
+
+        // String pool is encoded in UTF-8
+        UTF8_FLAG = 1&lt;&lt;8
+    };
+    uint32_t flags;
+
+    // Index from header of the string data.
+    uint32_t stringsStart;
+
+    // Index from header of the style data.
+    uint32_t stylesStart;
+};
+ * @author i
+ *
+ */
+public class ResStringPoolHeader {
+	
+	public ResChunkHeader header;
+	public int stringCount;
+	public int styleCount;
+	
+	public final static int SORTED_FLAG = 1;
+	public final static int UTF8_FLAG = (1&lt;&lt;8);
+	
+	public int flags;
+	public int stringsStart;
+	public int stylesStart;
+	
+	public ResStringPoolHeader(){
+		header = new ResChunkHeader();
+	}
+	
+	public int getHeaderSize(){
+		return header.getHeaderSize() + 4 + 4 + 4 + 4 + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "header:"+header.toString()+"\n" + "stringCount:"+stringCount+",styleCount:"+styleCount+",flags:"+flags+",stringStart:"+stringsStart+",stylesStart:"+stylesStart;
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">header：标准的Chunk头部信息结构</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">stringCount：字符串的个数</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">styleCount：字符串样式的个数</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">flags：字符串的属性,可取值包括0x000(UTF-16),0x001(字符串经过排序)、0X100(UTF-8)和他们的组合值</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">stringStart：字符串内容块相对于其头部的距离</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">stylesStart：字符串样式块相对于其头部的距离</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203140812128" alt=""></p>
+<p><span class="Apple-style-span">图中绿色高亮的部分就是字符串资源池头部,通过解析,我们可以得到如下信息,这个chunk的类型为RES_STRING_POOL_TYPE,即字符串资源池。头部大小为0X1C,整个chunk的大小为369524byte,有8073条字符串,72个字符串样式,为UTF-8编码,无排序,字符串内容块相对于此chunk头部的偏移为0X7F60,字符串样式块相对于此chunk头部的偏移为0X5A054。<br>
+紧接着头部的的是两个偏移数组，分别是字符串偏移数组和字符串样式偏移数组。这两个偏移数组的大小分别等于stringCount和styleCount的值，而每一个元素的类型都是无符号整型。整个字符中资源池结构如下。</span></p>
+<p><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203140828458" alt=""></p>
+<p><span class="Apple-style-span">字符串资源池中的字符串前两个字节为字符串长度,长度计算方法如下。另外如果字符串编码格式为UTF-8则字符串以0X00作为结束符,UTF-16则以0X0000作为结束符。<br>
+len = (((hbyte &amp; 0x7F) &lt;&lt; 8)) | lbyte;<br>
+字符串与字符串样式有一一对应的关系,也就是说如果第n个字符串有样式,则它的样式描述位于样式块的第n个元素。 字符串样式的结构包括如下两个结构体,ResStringPool_ref和ResStringPool_span。 一个字符串可以对应多个ResStringPool_span和一个ResStringPool_ref。ResStringPool_span在前描述字符串的样式,ResStringPool_ref在后固定值为0XFFFFFFFF作为占位符。样式块最后会以两个值为0XFFFFFFFF的ResStringPool_ref作为结束。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+ struct ResStringPool_ref
+ {
+     uint32_t index;
+ };
+ 
+ * @author i
+ *
+ */
+public class ResStringPoolRef {
+
+	public int index;
+	
+	public int getSize(){
+		return 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "index:"+index;
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141058879" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">图中蓝色高亮的部分就是样式内容块,按照格式解析可以得出,第一个字符串和第二字符串无样式,第三个字符串第4个字符到第7个字符的位置样式为字符串资源池中0X1F88的字符,以此类推。</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第四、Package数据块</span></span></h2>
+<p><span class="Apple-style-span">接着资源项的值字符串资源池后面的部分就是Package数据块,这个数据块记录编译包的元数据,头部结构如下：</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+struct ResTable_package
+{
+    struct ResChunk_header header;
+
+    // If this is a base package, its ID.  Package IDs start
+    // at 1 (corresponding to the value of the package bits in a
+    // resource identifier).  0 means this is not a base package.
+    uint32_t id;
+
+    // Actual name of this package, \0-terminated.
+    char16_t name[128];
+
+    // Offset to a ResStringPool_header defining the resource
+    // type symbol table.  If zero, this package is inheriting from
+    // another base package (overriding specific values in it).
+    uint32_t typeStrings;
+
+    // Last index into typeStrings that is for public use by others.
+    uint32_t lastPublicType;
+
+    // Offset to a ResStringPool_header defining the resource
+    // key symbol table.  If zero, this package is inheriting from
+    // another base package (overriding specific values in it).
+    uint32_t keyStrings;
+
+    // Last index into keyStrings that is for public use by others.
+    uint32_t lastPublicKey;
+};
+ * @author i
+ *
+ */
+public class ResTablePackage {
+	
+	public ResChunkHeader header;
+	public int id;
+	public char[] name = new char[128];
+	public int typeStrings;
+	public int lastPublicType;
+	public int keyStrings;
+	public int lastPublicKey;
+	
+	public ResTablePackage(){
+		header = new ResChunkHeader();
+	}
+	
+	@Override
+	public String toString(){
+		return "header:"+header.toString()+"\n"+",id="+id+",name:"+name.toString()+",typeStrings:"+typeStrings+",lastPublicType:"+lastPublicType+",keyStrings:"+keyStrings+",lastPublicKey:"+lastPublicKey;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">header：Chunk的头部信息数据结构</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">id：包的ID,等于Package Id,一般用户包的值Package Id为0X7F,系统资源包的Package Id为0X01；这个值很重要的，在后面我们构建前面说到的那个public.xml中的id值的时候需要用到。</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">name：包名</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">typeString：类型字符串资源池相对头部的偏移</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">lastPublicType：最后一个导出的Public类型字符串在类型字符串资源池中的索引，目前这个值设置为类型字符串资源池的元素个数。在解析的过程中没发现他的用途</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">keyStrings：资源项名称字符串相对头部的偏移</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">lastPublicKey：最后一个导出的Public资源项名称字符串在资源项名称字符串资源池中的索引，目前这个值设置为资源项名称字符串资源池的元素个数。在解析的过程中没发现他的用途</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141310849" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">图中紫色高亮的部分就是ResTable_package,按照上面的格式解析数据,我们可以得出,此Chunk的Type为RES_TABLE_PACKAGE_TYPE,头部大小为0X120,整个chunk的大小为1030716byte,Package Id为0X7F,包名称为co.runner.app,类型字符串资源池距离头部的偏移是0X120,有15条字符串,资源项名称字符串资源池0X1EC,有6249条字符串。<br>
+Packege数据块的整体结构,可以用以下的示意图表示：<br>
+</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141327589" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">其中Type String Pool和Key String Pool是两个字符串资源池,结构和资源项的值字符串资源池结构相同,分别对应类型字符串资源池和资源项名称字符串资源池。<br>
+再接下来的结构体可能是类型规范数据块或者类型资源项数据块,我们可以通过他们的Type来识别,类型规范数据块的Type为RES_TABLE_TYPE_SPEC_TYPE,类型资源项数据块的Type为RES_TABLE_TYPE_TYPE。<br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第五、类型规范数据块</span></span></h2>
+<p><span class="Apple-style-span">类型规范数据块用来描述资源项的配置差异性。通过这个差异性描述，我们就可以知道每一个资源项的配置状况。知道了一个资源项的配置状况之后，Android资源管理框架在检测到设备的配置信息发生变化之后，就可以知道是否需要重新加载该资源项。类型规范数据块是按照类型来组织的，也就是说，每一种类型都对应有一个类型规范数据块。其数据块头部结构如下。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+struct ResTable_typeSpec
+{
+    struct ResChunk_header header;
+
+    // The type identifier this chunk is holding.  Type IDs start
+    // at 1 (corresponding to the value of the type bits in a
+    // resource identifier).  0 is invalid.
+    uint8_t id;
+    
+    // Must be 0.
+    uint8_t res0;
+    // Must be 0.
+    uint16_t res1;
+    
+    // Number of uint32_t entry configuration masks that follow.
+    uint32_t entryCount;
+
+    enum {
+        // Additional flag indicating an entry is public.
+        SPEC_PUBLIC = 0x40000000
+    };
+};
+ * @author i
+ *
+ */
+public class ResTableTypeSpec {
+	
+	public final static int SPEC_PUBLIC = 0x40000000;
+	
+	public ResChunkHeader header;
+	public byte id;
+	public byte res0;
+	public short res1;
+	public int entryCount;
+	
+	public ResTableTypeSpec(){
+		header = new ResChunkHeader();
+	}
+	
+	@Override
+	public String toString(){
+		return "header:"+header.toString()+",id:"+id+",res0:"+res0+",res1:"+res1+",entryCount:"+entryCount;
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">header：Chunk的头部信息结构</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">id：标识资源的Type ID,Type ID是指资源的类型ID。资源的类型有animator、anim、color、drawable、layout、menu、raw、string和xml等等若干种，每一种都会被赋予一个ID。</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">res0：保留,始终为0</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">res1：保留,始终为0</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">entryCount：等于本类型的资源项个数,指名称相同的资源项的个数。</span></span></span></p>
+<p><span class="Apple-style-span">实例：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141452512" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">图中绿色高亮的部分就是ResTable_typeSpec,按照上面的格式解析数据,我们可以得出,此Chunk的Type为RES_TABLE_TYPE_SPEC_TYPE,头部大小为0X10,整个chunk的大小为564byte,资源ID为1,本类型资源项数量为137。<br>
+ResTable_typeSpec后面紧跟着的是一个大小为entryCount的uint32_t数组，每一个数组元素都用来描述一个资源项的配置差异性的。<br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第六、资源类型项数据块</span></span></h2>
+<p><span class="Apple-style-span">类型资源项数据块用来描述资源项的具体信息, 这样我们就可以知道每一个资源项的名称、值和配置等信息。 类型资源项数据同样是按照类型和配置来组织的,也就是说,一个具有n个配置的类型一共对应有n个类型资源项数据块。其数据块头部结构如下</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+struct ResTable_type
+{
+    struct ResChunk_header header;
+
+    enum {
+        NO_ENTRY = 0xFFFFFFFF
+    };
+    
+    // The type identifier this chunk is holding.  Type IDs start
+    // at 1 (corresponding to the value of the type bits in a
+    // resource identifier).  0 is invalid.
+    uint8_t id;
+    
+    // Must be 0.
+    uint8_t res0;
+    // Must be 0.
+    uint16_t res1;
+    
+    // Number of uint32_t entry indices that follow.
+    uint32_t entryCount;
+
+    // Offset from header where ResTable_entry data starts.
+    uint32_t entriesStart;
+    
+    // Configuration this collection of entries is designed for.
+    ResTable_config config;
+};
+ * @author i
+ *
+ */
+public class ResTableType {
+	
+	public ResChunkHeader header;
+	
+	public final static int NO_ENTRY = 0xFFFFFFFF;
+	
+	public byte id;
+	public byte res0;
+	public short res1;
+	public int entryCount;
+	public int entriesStart;
+	
+	public ResTableConfig resConfig;
+	
+	public ResTableType(){
+		header = new ResChunkHeader();
+		resConfig = new ResTableConfig();
+	}
+
+	public int getSize(){
+		return header.getHeaderSize() + 1 + 1 + 2 + 4 + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "header:"+header.toString()+",id:"+id+",res0:"+res0+",res1:"+res1+",entryCount:"+entryCount+",entriesStart:"+entriesStart;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">header：Chunk的头部信息结构</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">id：标识资源的Type ID</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">res0：保留,始终为0</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">res1：保留,始终为0</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">entryCount：等于本类型的资源项个数,指名称相同的资源项的个数。</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">entriesStart：等于资源项数据块相对头部的偏移值。</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">resConfig：指向一个ResTable_config,用来描述配置信息,地区,语言,分辨率等</span></span></span></p>
+<p>&nbsp;</p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141604381" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">图中红色高亮的部分就是ResTable_type,按照上面的格式解析数据,我们可以得出,RES_TABLE_TYPE_TYPE,头部大小为0X44,整个chunk的大小为4086byte,资源ID为1,本类型资源项数量为137,资源数据块相对于头部的偏移为0X268。<br>
+ResTable_type后接着是一个大小为entryCount的uint32_t数组，每一个数组元素都用来描述一个资源项数据块的偏移位置。 紧跟在这个偏移数组后面的是一个大小为entryCount的ResTable_entry数组,每一个数组元素都用来描述一个资源项的具体信息。ResTable_entry的结构如下：</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+import com.wjdiankong.parseresource.ParseResourceUtils;
+
+/**
+struct ResTable_entry
+{
+    // Number of bytes in this structure.
+    uint16_t size;
+
+    enum {
+        // If set, this is a complex entry, holding a set of name/value
+        // mappings.  It is followed by an array of ResTable_map structures.
+        FLAG_COMPLEX = 0x0001,
+        // If set, this resource has been declared public, so libraries
+        // are allowed to reference it.
+        FLAG_PUBLIC = 0x0002
+    };
+    uint16_t flags;
+    
+    // Reference into ResTable_package::keyStrings identifying this entry.
+    struct ResStringPool_ref key;
+};
+ * @author i
+ *
+ */
+public class ResTableEntry {
+	
+	public final static int FLAG_COMPLEX = 0x0001;
+	public final static int FLAG_PUBLIC = 0x0002;
+	
+	public short size;
+	public short flags;
+	
+	public ResStringPoolRef key;
+	
+	public ResTableEntry(){
+		key = new ResStringPoolRef();
+	}
+	
+	public int getSize(){
+		return 2+2+key.getSize();
+	}
+	
+	@Override
+	public String toString(){
+		return "size:"+size+",flags:"+flags+",key:"+key.toString()+",str:"+ParseResourceUtils.getKeyString(key.index);
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">ResTable_entry根据flags的不同,后面跟随的数据也不相同,如果flags此位为1,则ResTable_entry是ResTable_map_entry,ResTable_map_entry继承自ResTable_entry,其结构如下。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+ struct ResTable_map_entry : public ResTable_entry
+ {
+     //指向父ResTable_map_entry的资源ID，如果没有父ResTable_map_entry，则等于0。
+     ResTable_ref parent;
+     //等于后面ResTable_map的数量
+     uint32_t count;
+ };
+ * @author i
+ *
+ */
+public class ResTableMapEntry extends ResTableEntry{
+	
+	public ResTableRef parent;
+	public int count;
+	
+	public ResTableMapEntry(){
+		parent = new ResTableRef();
+	}
+	
+	@Override
+	public int getSize(){
+		return super.getSize() + parent.getSize() + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return super.toString() + ",parent:"+parent.toString()+",count:"+count;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">ResTable_map_entry其后跟随则count个ResTable_map类型的数组,ResTable_map的结构如下：</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+/**
+ struct ResTable_map
+ {
+     //bag资源项ID
+     ResTable_ref name;
+     //bag资源项值
+     Res_value value;
+ };
+ * @author i
+ *
+ */
+public class ResTableMap {
+	
+	public ResTableRef name;
+	public ResValue value;
+	
+	public ResTableMap(){
+		name = new ResTableRef();
+		value = new ResValue();
+	}
+	
+	public int getSize(){
+		return name.getSize() + value.getSize();
+	}
+	
+	@Override
+	public String toString(){
+		return name.toString()+",value:"+value.toString();
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203141921710" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">图中颜色由深到浅就是一个完整的flags为1的资源项,现在就一起来解读这段数据的含义,这个资源项头部的大小为0X10,flags为1所以后面跟随的是ResTable_map数组,名称没有在资源项引用池中,没有父map_entry,有一个ResTable_map。<br>
+如果flags此位为0,则ResTable_entry其后跟随的是一个Res_value,描述一个普通资源的值,Res_value结构如下。</span></p>
+<pre class="java">package com.wjdiankong.parseresource.type;
+
+import com.wjdiankong.parseresource.ParseResourceUtils;
+
+/**
+struct Res_value
+ {
+     //Res_value头部大小
+     uint16_t size;
+     //保留,始终为0
+     uint8_t res0;
+ 
+     enum {
+         TYPE_NULL = 0x00,
+         TYPE_REFERENCE = 0x01,
+         TYPE_ATTRIBUTE = 0x02,
+         TYPE_STRING = 0x03,
+         TYPE_FLOAT = 0x04,
+         TYPE_DIMENSION = 0x05,
+         TYPE_FRACTION = 0x06,
+         TYPE_FIRST_INT = 0x10,
+         TYPE_INT_DEC = 0x10,
+         TYPE_INT_HEX = 0x11,
+         TYPE_INT_BOOLEAN = 0x12,
+         TYPE_FIRST_COLOR_INT = 0x1c,
+         TYPE_INT_COLOR_ARGB8 = 0x1c,
+         TYPE_INT_COLOR_ARGB8 = 0x1c,
+         TYPE_INT_COLOR_RGB8 = 0x1d,
+         TYPE_INT_COLOR_ARGB4 = 0x1e,
+         TYPE_INT_COLOR_RGB4 = 0x1f,
+         TYPE_LAST_COLOR_INT = 0x1f,
+         TYPE_LAST_INT = 0x1f
+     };
+     //数据的类型,可以从上面的枚举类型中获取
+     uint8_t dataType;
+ 
+     //数据对应的索引
+     uint32_t data;
+ };
+ * @author i
+ *
+ */
+public class ResValue {
+	
+	//dataType字段使用的常量
+	public final static int TYPE_NULL = 0x00;
+	public final static int TYPE_REFERENCE = 0x01;
+	public final static int TYPE_ATTRIBUTE = 0x02;
+	public final static int TYPE_STRING = 0x03;
+	public final static int TYPE_FLOAT = 0x04;
+	public final static int TYPE_DIMENSION = 0x05;
+	public final static int TYPE_FRACTION = 0x06;
+	public final static int TYPE_FIRST_INT = 0x10;
+	public final static int TYPE_INT_DEC = 0x10;
+	public final static int TYPE_INT_HEX = 0x11;
+	public final static int TYPE_INT_BOOLEAN = 0x12;
+	public final static int TYPE_FIRST_COLOR_INT = 0x1c;
+	public final static int TYPE_INT_COLOR_ARGB8 = 0x1c;
+	public final static int TYPE_INT_COLOR_RGB8 = 0x1d;
+	public final static int TYPE_INT_COLOR_ARGB4 = 0x1e;
+	public final static int TYPE_INT_COLOR_RGB4 = 0x1f;
+	public final static int TYPE_LAST_COLOR_INT = 0x1f;
+	public final static int TYPE_LAST_INT = 0x1f;
+	
+	public static final int
+    COMPLEX_UNIT_PX			=0,
+    COMPLEX_UNIT_DIP		=1,
+    COMPLEX_UNIT_SP			=2,
+    COMPLEX_UNIT_PT			=3,
+    COMPLEX_UNIT_IN			=4,
+    COMPLEX_UNIT_MM			=5,
+	COMPLEX_UNIT_SHIFT		=0,
+    COMPLEX_UNIT_MASK		=15,
+    COMPLEX_UNIT_FRACTION	=0,
+    COMPLEX_UNIT_FRACTION_PARENT=1,
+    COMPLEX_RADIX_23p0		=0,
+    COMPLEX_RADIX_16p7		=1,
+    COMPLEX_RADIX_8p15		=2,
+    COMPLEX_RADIX_0p23		=3,
+    COMPLEX_RADIX_SHIFT		=4,
+    COMPLEX_RADIX_MASK		=3,
+    COMPLEX_MANTISSA_SHIFT	=8,
+    COMPLEX_MANTISSA_MASK	=0xFFFFFF;
+	
+	
+	public short size;
+	public byte res0;
+	public byte dataType;
+	public int data;
+	
+	public int getSize(){
+		return 2 + 1 + 1 + 4;
+	}
+	
+	public String getTypeStr(){
+		switch(dataType){
+			case TYPE_NULL:
+				return "TYPE_NULL";
+			case TYPE_REFERENCE:
+				return "TYPE_REFERENCE";
+			case TYPE_ATTRIBUTE:
+				return "TYPE_ATTRIBUTE";
+			case TYPE_STRING:
+				return "TYPE_STRING";
+			case TYPE_FLOAT:
+				return "TYPE_FLOAT";
+			case TYPE_DIMENSION:
+				return "TYPE_DIMENSION";
+			case TYPE_FRACTION:
+				return "TYPE_FRACTION";
+			case TYPE_FIRST_INT:
+				return "TYPE_FIRST_INT";
+			case TYPE_INT_HEX:
+				return "TYPE_INT_HEX";
+			case TYPE_INT_BOOLEAN:
+				return "TYPE_INT_BOOLEAN";
+			case TYPE_FIRST_COLOR_INT:
+				return "TYPE_FIRST_COLOR_INT";
+			case TYPE_INT_COLOR_RGB8:
+				return "TYPE_INT_COLOR_RGB8";
+			case TYPE_INT_COLOR_ARGB4:
+				return "TYPE_INT_COLOR_ARGB4";
+			case TYPE_INT_COLOR_RGB4:
+				return "TYPE_INT_COLOR_RGB4";
+		}
+		return "";
+	}
+	
+	/*public String getDataStr(){
+		if(dataType == TYPE_STRING){
+			return ParseResourceUtils.getResString(data);
+		}else if(dataType == TYPE_FIRST_COLOR_INT){
+			return Utils.bytesToHexString(Utils.int2Byte(data));
+		}else if(dataType == TYPE_INT_BOOLEAN){
+			return data==0 ? "false" : "true";
+		}
+		return data+"";
+	}*/
+	
+	public String getDataStr() {
+		if (dataType == TYPE_STRING) {
+			return ParseResourceUtils.getResString(data);
+		}
+		if (dataType == TYPE_ATTRIBUTE) {
+			return String.format("?%s%08X",getPackage(data),data);
+		}
+		if (dataType == TYPE_REFERENCE) {
+			return String.format("@%s%08X",getPackage(data),data);
+		}
+		if (dataType == TYPE_FLOAT) {
+			return String.valueOf(Float.intBitsToFloat(data));
+		}
+		if (dataType == TYPE_INT_HEX) {
+			return String.format("0x%08X",data);
+		}
+		if (dataType == TYPE_INT_BOOLEAN) {
+			return data!=0?"true":"false";
+		}
+		if (dataType == TYPE_DIMENSION) {
+			return Float.toString(complexToFloat(data))+
+				DIMENSION_UNITS[data &amp; COMPLEX_UNIT_MASK];
+		}
+		if (dataType == TYPE_FRACTION) {
+			return Float.toString(complexToFloat(data))+
+				FRACTION_UNITS[data &amp; COMPLEX_UNIT_MASK];
+		}
+		if (dataType &gt;= TYPE_FIRST_COLOR_INT &amp;&amp; dataType &lt;= TYPE_LAST_COLOR_INT) {
+			return String.format("#%08X",data);
+		}
+		if (dataType &gt;= TYPE_FIRST_INT &amp;&amp; dataType &lt;= TYPE_LAST_INT) {
+			return String.valueOf(data);
+		}
+		return String.format("&lt;0x%X, type 0x%02X&gt;",data, dataType);
+	}
+	
+	private static String getPackage(int id) {
+		if (id&gt;&gt;&gt;24==1) {
+			return "android:";
+		}
+		return "";
+	}
+	
+	public static float complexToFloat(int complex) {
+		return (float)(complex &amp; 0xFFFFFF00)*RADIX_MULTS[(complex&gt;&gt;4) &amp; 3];
+	}
+	
+	private static final float RADIX_MULTS[]={
+		0.00390625F,3.051758E-005F,1.192093E-007F,4.656613E-010F
+	};
+	
+	private static final String DIMENSION_UNITS[]={
+		"px","dip","sp","pt","in","mm","",""
+	};
+	
+	private static final String FRACTION_UNITS[]={
+		"%","%p","","","","","",""
+	};
+	
+	@Override
+	public String toString(){
+		return "size:"+size+",res0:"+res0+",dataType:"+getTypeStr()+",data:"+getDataStr();
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">size：ResValue的头部大小</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">res0：保留，始终为0</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">dataType：数据的类型,可以从上面的枚举类型中获取</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">data：数据对应的索引</span></span></span></p>
+<p><span class="Apple-style-span">这里我们看到了有一个转化的方法，这个我们在解析AndroidManifest文件的时候也用到了这个方法。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">实例：</span></span></p>
+<p><span class="Apple-style-span">图中画红线的部分就是一个ResTable_entry其后跟随的是一个Res_value的例子,从中我们可以得出以下信息,这个头部大小为8,flags等于0,所以后面跟随的是Res_value,在资源项名称字符串资源池中的索引为150,对应的值是badge_continue_months,Res_value的大小为8,数据的类型是TYPE_STRING,在资源项的值字符串资源池的索引为1912,对应的值是res/drawable-nodpi-v4/badge_continue_months.png。<br>
+当我们对arsc的文件格式有了了解过后,我们就可以开始我们的探索之旅了,由于在使用Android studio调试Apktool源码的时候遇到很多障碍,在前辈的指导下才能够顺利进行调试,所以下面简单介绍下设置Android studio调试Apktool源码的方法。</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203142054160" alt=""></span></p>
+<p>&nbsp;</p>
+<h1><span class="Apple-style-span">四、解析代码分析</span></h1>
+<p><span class="Apple-style-span">因为篇幅的原因，这里就不把所有的代码都粘贴出来了，后面会列出来代码下载地址</span></p>
+<pre class="java">package com.wjdiankong.parseresource;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+
+public class ParseResourceMain {
+	
+	public static void main(String[] args){
+		
+		byte[] srcByte = null;
+		FileInputStream fis = null;
+		ByteArrayOutputStream bos = null;
+		try{
+			fis = new FileInputStream("resource/resources_gdt1.arsc");
+			bos = new ByteArrayOutputStream();
+			byte[] buffer = new byte[1024];
+			int len = 0;
+			while((len=fis.read(buffer)) != -1){
+				bos.write(buffer, 0, len);
+			}
+			srcByte = bos.toByteArray();
+		}catch(Exception e){
+			System.out.println("read res file error:"+e.toString());
+		}finally{
+			try{
+				fis.close();
+				bos.close();
+			}catch(Exception e){
+				System.out.println("close file error:"+e.toString());
+			}
+		}
+		
+		if(srcByte == null){
+			System.out.println("get src error...");
+			return;
+		}
+		
+		System.out.println("parse restable header...");
+		ParseResourceUtils.parseResTableHeaderChunk(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+		
+		System.out.println("parse resstring pool chunk...");
+		ParseResourceUtils.parseResStringPoolChunk(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+		
+		System.out.println("parse package chunk...");
+		ParseResourceUtils.parsePackage(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+		
+		System.out.println("parse typestring pool chunk...");
+		ParseResourceUtils.parseTypeStringPoolChunk(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+		
+		System.out.println("parse keystring pool chunk...");
+		ParseResourceUtils.parseKeyStringPoolChunk(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+		
+		int resCount = 0;
+		while(!ParseResourceUtils.isEnd(srcByte.length)){
+			resCount++;
+			boolean isSpec = ParseResourceUtils.isTypeSpec(srcByte);
+			if(isSpec){
+				System.out.println("parse restype spec chunk...");
+				ParseResourceUtils.parseResTypeSpec(srcByte);
+				System.out.println("++++++++++++++++++++++++++++++++++++++");
+				System.out.println();
+			}else{
+				System.out.println("parse restype info chunk...");
+				ParseResourceUtils.parseResTypeInfo(srcByte);
+				System.out.println("++++++++++++++++++++++++++++++++++++++");
+				System.out.println();
+			}
+		}
+		System.out.println("res count:"+resCount);
+		
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">我们看到代码，首先我们读取resource.arsc文件到一个byte数组，然后开始解析。</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第一、解析头部信息</span></span></h2>
+<pre class="java">/**
+ * 解析头部信息
+ * @param src
+ */
+public static void parseResTableHeaderChunk(byte[] src){
+	ResTableHeader resTableHeader = new ResTableHeader();
+
+	resTableHeader.header = parseResChunkHeader(src, 0);
+
+	resStringPoolChunkOffset = resTableHeader.header.headerSize;
+
+	//解析PackageCount个数(一个apk可能包含多个Package资源)
+	byte[] packageCountByte = Utils.copyByte(src, resTableHeader.header.getHeaderSize(), 4);
+	resTableHeader.packageCount = Utils.byte2int(packageCountByte);
+
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203143654448" alt="" width="325" height="75"></span></p>
+<p>&nbsp;</p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第二、解析资源字符串内容</span></span></h2>
+<pre class="java">/**
+ * 解析Resource.arsc文件中所有字符串内容
+ * @param src
+ */
+public static void parseResStringPoolChunk(byte[] src){
+	ResStringPoolHeader stringPoolHeader = parseStringPoolChunk(src, resStringList, resStringPoolChunkOffset);
+	packageChunkOffset = resStringPoolChunkOffset + stringPoolHeader.header.size;
+}</pre>
+<p>这里有一个核心的方法：parseStringPoolChunk</p>
+<pre class="java">/**
+ * 统一解析字符串内容
+ * @param src
+ * @param stringList
+ * @param stringOffset
+ * @return
+ */
+public static ResStringPoolHeader parseStringPoolChunk(byte[] src, ArrayList&lt;String&gt; stringList, int stringOffset){
+	ResStringPoolHeader stringPoolHeader = new ResStringPoolHeader();
+
+	//解析头部信息
+	stringPoolHeader.header = parseResChunkHeader(src, stringOffset);
+
+	System.out.println("header size:"+stringPoolHeader.header.headerSize);
+	System.out.println("size:"+stringPoolHeader.header.size);
+
+	int offset = stringOffset + stringPoolHeader.header.getHeaderSize();
+
+	//获取字符串的个数
+	byte[] stringCountByte = Utils.copyByte(src, offset, 4);
+	stringPoolHeader.stringCount = Utils.byte2int(stringCountByte);
+
+	//解析样式的个数
+	byte[] styleCountByte = Utils.copyByte(src, offset+4, 4);
+	stringPoolHeader.styleCount = Utils.byte2int(styleCountByte);
+
+	//这里表示字符串的格式:UTF-8/UTF-16
+	byte[] flagByte = Utils.copyByte(src, offset+8, 4);
+	System.out.println("flag:"+Utils.bytesToHexString(flagByte));
+	stringPoolHeader.flags = Utils.byte2int(flagByte);
+
+	//字符串内容的开始位置
+	byte[] stringStartByte = Utils.copyByte(src, offset+12, 4);
+	stringPoolHeader.stringsStart = Utils.byte2int(stringStartByte);
+	System.out.println("string start:"+Utils.bytesToHexString(stringStartByte));
+
+	//样式内容的开始位置
+	byte[] sytleStartByte = Utils.copyByte(src, offset+16, 4);
+	stringPoolHeader.stylesStart = Utils.byte2int(sytleStartByte);
+	System.out.println("style start:"+Utils.bytesToHexString(sytleStartByte));
+
+	//获取字符串内容的索引数组和样式内容的索引数组
+	int[] stringIndexAry = new int[stringPoolHeader.stringCount];
+	int[] styleIndexAry = new int[stringPoolHeader.styleCount];
+
+	System.out.println("string count:"+stringPoolHeader.stringCount);
+	System.out.println("style count:"+stringPoolHeader.styleCount);
+
+	int stringIndex = offset + 20;
+	for(int i=0;i&lt;stringPoolHeader.stringCount;i++){
+		stringIndexAry[i] = Utils.byte2int(Utils.copyByte(src, stringIndex+i*4, 4));
+	}
+
+	int styleIndex = stringIndex + 4*stringPoolHeader.stringCount;
+	for(int i=0;i&lt;stringPoolHeader.styleCount;i++){
+		styleIndexAry[i] = Utils.byte2int(Utils.copyByte(src,  styleIndex+i*4, 4));
+	}
+
+	//每个字符串的头两个字节的最后一个字节是字符串的长度
+	//这里获取所有字符串的内容
+	int stringContentIndex = styleIndex + stringPoolHeader.styleCount*4;
+	System.out.println("string index:"+Utils.bytesToHexString(Utils.int2Byte(stringContentIndex)));
+	int index = 0;
+	while(index &lt; stringPoolHeader.stringCount){
+		byte[] stringSizeByte = Utils.copyByte(src, stringContentIndex, 2);
+		int stringSize = (stringSizeByte[1] &amp; 0x7F);
+		if(stringSize != 0){
+			String val = "";
+			try{
+				val = new String(Utils.copyByte(src, stringContentIndex+2, stringSize), "utf-8");
+			}catch(Exception e){
+				System.out.println("string encode error:"+e.toString());
+			}
+			stringList.add(val);
+		}else{
+			stringList.add("");
+		}
+		stringContentIndex += (stringSize+3);
+		index++;
+	}
+	for(String str : stringList){
+		System.out.println("str:"+str);
+	}
+
+	return stringPoolHeader;
+
+}</pre>
+<p><span class="Apple-style-span">这里在得到一个字符串的时候，需要得到字符串的开始位置和字符串的大小即可，这点和解析AndroidManifest.xml文件中的字符串原理是一样的，就是一个字符串块的头两个字节中的最后一个字节是字符串的长度。这里我们在解析完字符串之后，需要用一个列表将其存储起来，后面有用到，需要通过索引来取字符串内容。</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203143750952" alt="" width="270" height="465"><br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第三、解析包信息</span></span></h2>
+<pre class="java">/**
+ * 解析Package信息
+ * @param src
+ */
+public static void parsePackage(byte[] src){
+	System.out.println("pchunkoffset:"+Utils.bytesToHexString(Utils.int2Byte(packageChunkOffset)));
+	ResTablePackage resTabPackage = new ResTablePackage();
+	//解析头部信息
+	resTabPackage.header = parseResChunkHeader(src, packageChunkOffset);
+
+	System.out.println("package size:"+resTabPackage.header.headerSize);
+
+	int offset = packageChunkOffset + resTabPackage.header.getHeaderSize();
+
+	//解析packId
+	byte[] idByte = Utils.copyByte(src, offset, 4);
+	resTabPackage.id = Utils.byte2int(idByte);
+	packId = resTabPackage.id;
+
+	//解析包名
+	System.out.println("package offset:"+Utils.bytesToHexString(Utils.int2Byte(offset+4)));
+	byte[] nameByte = Utils.copyByte(src, offset+4, 128*2);//这里的128是这个字段的大小，可以查看类型说明，是char类型的，所以要乘以2
+	String packageName = new String(nameByte);
+	packageName = Utils.filterStringNull(packageName);
+	System.out.println("pkgName:"+packageName);
+
+	//解析类型字符串的偏移值
+	byte[] typeStringsByte = Utils.copyByte(src, offset+4+128*2, 4);
+	resTabPackage.typeStrings = Utils.byte2int(typeStringsByte);
+	System.out.println("typeString:"+resTabPackage.typeStrings);
+
+	//解析lastPublicType字段
+	byte[] lastPublicType = Utils.copyByte(src, offset+8+128*2, 4);
+	resTabPackage.lastPublicType = Utils.byte2int(lastPublicType);
+
+	//解析keyString字符串的偏移值
+	byte[] keyStrings = Utils.copyByte(src, offset+12+128*2, 4);
+	resTabPackage.keyStrings = Utils.byte2int(keyStrings);
+	System.out.println("keyString:"+resTabPackage.keyStrings);
+
+	//解析lastPublicKey
+	byte[] lastPublicKey = Utils.copyByte(src, offset+12+128*2, 4);
+	resTabPackage.lastPublicKey = Utils.byte2int(lastPublicKey);
+
+	//这里获取类型字符串的偏移值和类型字符串的偏移值
+	keyStringPoolChunkOffset = (packageChunkOffset+resTabPackage.keyStrings);
+	typeStringPoolChunkOffset = (packageChunkOffset+resTabPackage.typeStrings);
+
+}</pre>
+<p><span class="Apple-style-span">这里我们看到有一个特殊的地方，就是最后两行，这里需要得到我们后面需要重要解析的两个内容，一个是资源值字符串的偏移值和资源类型字符串的偏移值。</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203144346676" alt="" width="240" height="95"><br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第四、解析资源类型的字符串内容</span></span></h2>
+<pre class="java">/**
+ * 解析类型字符串内容
+ * @param src
+ */
+public static void parseTypeStringPoolChunk(byte[] src){
+	System.out.println("typestring offset:"+Utils.bytesToHexString(Utils.int2Byte(typeStringPoolChunkOffset)));
+	ResStringPoolHeader stringPoolHeader = parseStringPoolChunk(src, typeStringList, typeStringPoolChunkOffset);
+	System.out.println("size:"+stringPoolHeader.header.size);
+}</pre>
+<p><span class="Apple-style-span">这里也是用parseStringPoolChunk方法进行解析的，同样也需要用一个字符串列表存储内容</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203144423798" alt="" width="240" height="240"><br>
+</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第五、解析资源值字符串内容</span></span></h2>
+<pre class="java">/**
+ * 解析key字符串内容
+ * @param src
+ */
+public static void parseKeyStringPoolChunk(byte[] src){
+	System.out.println("keystring offset:"+Utils.bytesToHexString(Utils.int2Byte(keyStringPoolChunkOffset)));
+	ResStringPoolHeader stringPoolHeader  = parseStringPoolChunk(src, keyStringList, keyStringPoolChunkOffset);
+	System.out.println("size:"+stringPoolHeader.header.size);
+	//解析完key字符串之后，需要赋值给resType的偏移值,后续还需要继续解析
+	resTypeOffset = (keyStringPoolChunkOffset+stringPoolHeader.header.size);
+}</pre>
+<p><span class="Apple-style-span">这里也是一样，使用parseStringPoolChunk方法来解析，解析完之后需要用一个字符串列表保存，后面需要使用索引值来访问<br>
+</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203144551335" alt="" width="215" height="460"></span></p>
+<p>&nbsp;</p>
+<h2><span class="Apple-style-span">第六、解析正文内容</span></h2>
+<p><span class="Apple-style-span">这里说到的正文内容就是ResValue值，也就是开始构建public.xml中的条目信息，和类型的分离不同的xml文件，所以这部分的内容的解析工作有点复杂</span></p>
+<pre class="java">int resCount = 0;
+while(!ParseResourceUtils.isEnd(srcByte.length)){
+	resCount++;
+	boolean isSpec = ParseResourceUtils.isTypeSpec(srcByte);
+	if(isSpec){
+		System.out.println("parse restype spec chunk...");
+		ParseResourceUtils.parseResTypeSpec(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+	}else{
+		System.out.println("parse restype info chunk...");
+		ParseResourceUtils.parseResTypeInfo(srcByte);
+		System.out.println("++++++++++++++++++++++++++++++++++++++");
+		System.out.println();
+	}
+}
+System.out.println("res count:"+resCount);</pre>
+<p><span class="Apple-style-span">这里有一个循环解析，有两个方法，一个是isEnd方法，一个是isTypeSpec方法</span></p>
+<p><span class="Apple-style-span">我们如果仔细看上面的那张神图的话，就可以看到，后面的ResType和ResTypeSpec他们两个内容是交替出现的，直到文件结束。</span></p>
+<p><span class="Apple-style-span">所以isEnd方法就是判断是否到达文件结束位置：</span></p>
+<pre class="java">/**
+ * 判断是否到文件末尾了
+ * @param length
+ * @return
+ */
+public static boolean isEnd(int length){
+	if(resTypeOffset&gt;=length){
+		return true;
+	}
+	return false;
+}</pre>
+<p><span class="Apple-style-span">还有一个方法就是判断是ResType还是ResTypeSpec，这个可以通过Chunk中头部信息来区分的：</span></p>
+<pre class="java">/**
+ * 判断是不是类型描述符
+ * @param src
+ * @return
+ */
+public static boolean isTypeSpec(byte[] src){
+	ResChunkHeader header = parseResChunkHeader(src, resTypeOffset);
+	if(header.type == 0x0202){
+		return true;
+	}
+	return false;
+}</pre>
+<p><span class="Apple-style-span">那么就是分别来解析ResTypeSpec和ResType这两个内容了：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">1、解析ResTypeSpec</span></span></p>
+<p><span class="Apple-style-span">主要得到Res的每个类型名</span></p>
+<pre class="java">/**
+ * 解析ResTypeSepc类型描述内容
+ * @param src
+ */
+public static void parseResTypeSpec(byte[] src){
+	System.out.println("res type spec offset:"+Utils.bytesToHexString(Utils.int2Byte(resTypeOffset)));
+	ResTableTypeSpec typeSpec = new ResTableTypeSpec();
+	//解析头部信息
+	typeSpec.header = parseResChunkHeader(src, resTypeOffset);
+
+	int offset = (resTypeOffset + typeSpec.header.getHeaderSize());
+
+	//解析id类型
+	byte[] idByte = Utils.copyByte(src, offset, 1);
+	typeSpec.id = (byte)(idByte[0] &amp; 0xFF);
+	resTypeId = typeSpec.id;
+
+	//解析res0字段,这个字段是备用的，始终是0
+	byte[] res0Byte = Utils.copyByte(src, offset+1, 1);
+	typeSpec.res0 = (byte)(res0Byte[0] &amp; 0xFF);
+
+	//解析res1字段，这个字段是备用的，始终是0
+	byte[] res1Byte = Utils.copyByte(src, offset+2, 2);
+	typeSpec.res1 = Utils.byte2Short(res1Byte);
+
+	//entry的总个数
+	byte[] entryCountByte = Utils.copyByte(src, offset+4, 4);
+	typeSpec.entryCount = Utils.byte2int(entryCountByte);
+
+	System.out.println("res type spec:"+typeSpec);
+
+	System.out.println("type_name:"+typeStringList.get(typeSpec.id-1));
+
+	//获取entryCount个int数组
+	int[] intAry = new int[typeSpec.entryCount];
+	int intAryOffset = resTypeOffset + typeSpec.header.headerSize;
+	System.out.print("int element:");
+	for(int i=0;i&lt;typeSpec.entryCount;i++){
+		int element = Utils.byte2int(Utils.copyByte(src, intAryOffset+i*4, 4));
+		intAry[i] = element;
+		System.out.print(element+",");
+	}
+	System.out.println();
+
+	resTypeOffset += typeSpec.header.size;
+
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203150426228" alt="" width="520" height="70"><br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">2、解析ResType</span></span></p>
+<p><span class="Apple-style-span">主要得到每个res类型的所有条目内容</span></p>
+<pre class="java">/**
+ * 解析类型信息内容
+ * @param src
+ */
+public static void parseResTypeInfo(byte[] src){
+	System.out.println("type chunk offset:"+Utils.bytesToHexString(Utils.int2Byte(resTypeOffset)));
+	ResTableType type = new ResTableType();
+	//解析头部信息
+	type.header = parseResChunkHeader(src, resTypeOffset);
+
+	int offset = (resTypeOffset + type.header.getHeaderSize());
+
+	//解析type的id值
+	byte[] idByte = Utils.copyByte(src, offset, 1);
+	type.id = (byte)(idByte[0] &amp; 0xFF);
+
+	//解析res0字段的值，备用字段，始终是0
+	byte[] res0 = Utils.copyByte(src, offset+1, 1);
+	type.res0 = (byte)(res0[0] &amp; 0xFF);
+
+	//解析res1字段的值，备用字段，始终是0
+	byte[] res1 = Utils.copyByte(src, offset+2, 2);
+	type.res1 = Utils.byte2Short(res1);
+
+	byte[] entryCountByte = Utils.copyByte(src, offset+4, 4);
+	type.entryCount = Utils.byte2int(entryCountByte);
+
+	byte[] entriesStartByte = Utils.copyByte(src, offset+8, 4);
+	type.entriesStart = Utils.byte2int(entriesStartByte);
+
+	ResTableConfig resConfig = new ResTableConfig();
+	resConfig = parseResTableConfig(Utils.copyByte(src, offset+12, resConfig.getSize()));
+	System.out.println("config:"+resConfig);
+
+	System.out.println("res type info:"+type);
+
+	System.out.println("type_name:"+typeStringList.get(type.id-1));
+
+	//先获取entryCount个int数组
+	System.out.print("type int elements:");
+	int[] intAry = new int[type.entryCount];
+	for(int i=0;i&lt;type.entryCount;i++){
+		int element = Utils.byte2int(Utils.copyByte(src, resTypeOffset+type.header.headerSize+i*4, 4));
+		intAry[i] = element;
+		System.out.print(element+",");
+	}
+	System.out.println();
+
+	//这里开始解析后面对应的ResEntry和ResValue
+	int entryAryOffset = resTypeOffset + type.entriesStart;
+	ResTableEntry[] tableEntryAry = new ResTableEntry[type.entryCount];
+	ResValue[] resValueAry = new ResValue[type.entryCount];
+	System.out.println("entry offset:"+Utils.bytesToHexString(Utils.int2Byte(entryAryOffset)));
+
+	//这里存在一个问题就是如果是ResMapEntry的话，偏移值是不一样的，所以这里需要计算不同的偏移值
+	int bodySize = 0, valueOffset = entryAryOffset;
+	for(int i=0;i&lt;type.entryCount;i++){
+		int resId = getResId(i);
+		System.out.println("resId:"+Utils.bytesToHexString(Utils.int2Byte(resId)));
+		ResTableEntry entry = new ResTableEntry();
+		ResValue value = new ResValue();
+		valueOffset += bodySize;
+		System.out.println("valueOffset:"+Utils.bytesToHexString(Utils.int2Byte(valueOffset)));
+		entry = parseResEntry(Utils.copyByte(src, valueOffset, entry.getSize()));
+
+		//这里需要注意的是，先判断entry的flag变量是否为1,如果为1的话，那就ResTable_map_entry
+		if(entry.flags == 1){
+			//这里是复杂类型的value
+			ResTableMapEntry mapEntry = new ResTableMapEntry();
+			mapEntry = parseResMapEntry(Utils.copyByte(src, valueOffset, mapEntry.getSize()));
+			System.out.println("map entry:"+mapEntry);
+			ResTableMap resMap = new ResTableMap();
+			for(int j=0;j&lt;mapEntry.count;j++){
+				int mapOffset = valueOffset + mapEntry.getSize() + resMap.getSize()*j;
+				resMap = parseResTableMap(Utils.copyByte(src, mapOffset, resMap.getSize()));
+				System.out.println("map:"+resMap);
+			}
+			bodySize = mapEntry.getSize() + resMap.getSize()*mapEntry.count;
+		}else{
+			System.out.println("entry:"+entry);
+			//这里是简单的类型的value
+			value = parseResValue(Utils.copyByte(src, valueOffset+entry.getSize(), value.getSize()));
+			System.out.println("value:"+value);
+			bodySize = entry.getSize()+value.getSize();
+		}
+
+		tableEntryAry[i] = entry;
+		resValueAry[i] = value;
+
+		System.out.println("======================================");
+	}
+
+	resTypeOffset += type.header.size;
+
+}
+
+/**
+ * 解析ResEntry内容
+ * @param src
+ * @return
+ */
+public static ResTableEntry parseResEntry(byte[] src){
+	ResTableEntry entry = new ResTableEntry();
+
+	byte[] sizeByte = Utils.copyByte(src, 0, 2);
+	entry.size = Utils.byte2Short(sizeByte);
+
+	byte[] flagByte = Utils.copyByte(src, 2, 2);
+	entry.flags = Utils.byte2Short(flagByte);
+
+	ResStringPoolRef key = new ResStringPoolRef();
+	byte[] keyByte = Utils.copyByte(src, 4, 4);
+	key.index = Utils.byte2int(keyByte);
+	entry.key = key;
+
+	return entry;
+}
+
+/**
+ * 解析ResMapEntry内容
+ * @param src
+ * @return
+ */
+public static ResTableMapEntry parseResMapEntry(byte[] src){
+	ResTableMapEntry entry = new ResTableMapEntry();
+
+	byte[] sizeByte = Utils.copyByte(src, 0, 2);
+	entry.size = Utils.byte2Short(sizeByte);
+
+	byte[] flagByte = Utils.copyByte(src, 2, 2);
+	entry.flags = Utils.byte2Short(flagByte);
+
+	ResStringPoolRef key = new ResStringPoolRef();
+	byte[] keyByte = Utils.copyByte(src, 4, 4);
+	key.index = Utils.byte2int(keyByte);
+	entry.key = key;
+
+	ResTableRef ref = new ResTableRef();
+	byte[] identByte = Utils.copyByte(src, 8, 4);
+	ref.ident = Utils.byte2int(identByte);
+	entry.parent = ref;
+	byte[] countByte = Utils.copyByte(src, 12, 4);
+	entry.count = Utils.byte2int(countByte);
+
+	return entry;
+}
+
+/**
+ * 解析ResValue内容
+ * @param src
+ * @return
+ */
+public static ResValue parseResValue(byte[] src){
+	ResValue resValue = new ResValue();
+	byte[] sizeByte = Utils.copyByte(src, 0, 2);
+	resValue.size = Utils.byte2Short(sizeByte);
+
+	byte[] res0Byte = Utils.copyByte(src, 2, 1);
+	resValue.res0 = (byte)(res0Byte[0] &amp; 0xFF);
+
+	byte[] dataType = Utils.copyByte(src, 3, 1);
+	resValue.dataType = (byte)(dataType[0] &amp; 0xFF);
+
+	byte[] data = Utils.copyByte(src, 4, 4);
+	resValue.data = Utils.byte2int(data);
+
+	return resValue;
+}
+
+/**
+ * 解析ResTableMap内容
+ * @param src
+ * @return
+ */
+public static ResTableMap parseResTableMap(byte[] src){
+	ResTableMap tableMap = new ResTableMap();
+
+	ResTableRef ref = new ResTableRef();
+	byte[] identByte = Utils.copyByte(src, 0, ref.getSize());
+	ref.ident = Utils.byte2int(identByte);
+	tableMap.name = ref;
+
+	ResValue value = new ResValue();
+	value = parseResValue(Utils.copyByte(src, ref.getSize(), value.getSize()));
+	tableMap.value = value;
+
+	return tableMap;
+
+}
+
+/**
+ * 解析ResTableConfig配置信息
+ * @param src
+ * @return
+ */
+public static ResTableConfig parseResTableConfig(byte[] src){
+	ResTableConfig config = new ResTableConfig();
+
+	byte[] sizeByte = Utils.copyByte(src, 0, 4);
+	config.size = Utils.byte2int(sizeByte);
+
+	//以下结构是Union
+	byte[] mccByte = Utils.copyByte(src, 4, 2);
+	config.mcc = Utils.byte2Short(mccByte);
+	byte[] mncByte = Utils.copyByte(src, 6, 2);
+	config.mnc = Utils.byte2Short(mncByte);
+	byte[] imsiByte = Utils.copyByte(src, 4, 4);
+	config.imsi = Utils.byte2int(imsiByte);
+
+	//以下结构是Union
+	byte[] languageByte = Utils.copyByte(src, 8, 2);
+	config.language = languageByte;
+	byte[] countryByte = Utils.copyByte(src, 10, 2);
+	config.country = countryByte;
+	byte[] localeByte = Utils.copyByte(src, 8, 4);
+	config.locale = Utils.byte2int(localeByte);
+
+	//以下结构是Union
+	byte[] orientationByte = Utils.copyByte(src, 12, 1);
+	config.orientation = orientationByte[0];
+	byte[] touchscreenByte = Utils.copyByte(src, 13, 1);
+	config.touchscreen = touchscreenByte[0];
+	byte[] densityByte = Utils.copyByte(src, 14, 2);
+	config.density = Utils.byte2Short(densityByte);
+	byte[] screenTypeByte = Utils.copyByte(src, 12, 4);
+	config.screenType = Utils.byte2int(screenTypeByte);
+
+	//以下结构是Union
+	byte[] keyboardByte = Utils.copyByte(src, 16, 1);
+	config.keyboard = keyboardByte[0];
+	byte[] navigationByte = Utils.copyByte(src, 17, 1);
+	config.navigation = navigationByte[0];
+	byte[] inputFlagsByte = Utils.copyByte(src, 18, 1);
+	config.inputFlags = inputFlagsByte[0];
+	byte[] inputPad0Byte = Utils.copyByte(src, 19, 1);
+	config.inputPad0 = inputPad0Byte[0];
+	byte[] inputByte = Utils.copyByte(src, 16, 4);
+	config.input = Utils.byte2int(inputByte);
+
+	//以下结构是Union
+	byte[] screenWidthByte = Utils.copyByte(src, 20, 2);
+	config.screenWidth = Utils.byte2Short(screenWidthByte);
+	byte[] screenHeightByte = Utils.copyByte(src, 22, 2);
+	config.screenHeight = Utils.byte2Short(screenHeightByte);
+	byte[] screenSizeByte = Utils.copyByte(src, 20, 4);
+	config.screenSize = Utils.byte2int(screenSizeByte);
+
+	//以下结构是Union
+	byte[] sdVersionByte = Utils.copyByte(src, 24, 2);
+	config.sdVersion = Utils.byte2Short(sdVersionByte);
+	byte[] minorVersionByte = Utils.copyByte(src, 26, 2);
+	config.minorVersion = Utils.byte2Short(minorVersionByte);
+	byte[] versionByte = Utils.copyByte(src, 24, 4);
+	config.version = Utils.byte2int(versionByte);
+
+	//以下结构是Union
+	byte[] screenLayoutByte = Utils.copyByte(src, 28, 1);
+	config.screenLayout = screenLayoutByte[0];
+	byte[] uiModeByte = Utils.copyByte(src, 29, 1);
+	config.uiMode = uiModeByte[0];
+	byte[] smallestScreenWidthDpByte = Utils.copyByte(src, 30, 2);
+	config.smallestScreenWidthDp = Utils.byte2Short(smallestScreenWidthDpByte);
+	byte[] screenConfigByte = Utils.copyByte(src, 28, 4);
+	config.screenConfig = Utils.byte2int(screenConfigByte);
+
+	//以下结构是Union
+	byte[] screenWidthDpByte = Utils.copyByte(src, 32, 2);
+	config.screenWidthDp = Utils.byte2Short(screenWidthDpByte);
+	byte[] screenHeightDpByte = Utils.copyByte(src, 34, 2);
+	config.screenHeightDp = Utils.byte2Short(screenHeightDpByte);
+	byte[] screenSizeDpByte = Utils.copyByte(src, 32, 4);
+	config.screenSizeDp = Utils.byte2int(screenSizeDpByte);
+
+	byte[] localeScriptByte = Utils.copyByte(src, 36, 4);
+	config.localeScript = localeScriptByte;
+
+	byte[] localeVariantByte = Utils.copyByte(src, 40, 8);
+	config.localeVariant = localeVariantByte;
+	return config;
+}</pre>
+<p><span class="Apple-style-span">看到这里，我们发现这里的解析很复杂的，和我们在讲解数据结构的时候那里一样，他需要解析很多内容：</span></p>
+<p><span class="Apple-style-span">ResValue，ResTableMap，ResTableMapEntry，ResTableEntry，ResConfig</span></p>
+<p><span class="Apple-style-span">关于每个数据结构如何解析这里就不多说了，就是读取字节即可。这里有一个核心的代码：</span></p>
+<pre class="java">//这里需要注意的是，先判断entry的flag变量是否为1,如果为1的话，那就ResTable_map_entry
+if(entry.flags == 1){
+	//这里是复杂类型的value
+	ResTableMapEntry mapEntry = new ResTableMapEntry();
+	mapEntry = parseResMapEntry(Utils.copyByte(src, valueOffset, mapEntry.getSize()));
+	System.out.println("map entry:"+mapEntry);
+	ResTableMap resMap = new ResTableMap();
+	for(int j=0;j&lt;mapEntry.count;j++){
+		int mapOffset = valueOffset + mapEntry.getSize() + resMap.getSize()*j;
+		resMap = parseResTableMap(Utils.copyByte(src, mapOffset, resMap.getSize()));
+		System.out.println("map:"+resMap);
+	}
+	bodySize = mapEntry.getSize() + resMap.getSize()*mapEntry.count;
+}else{
+	System.out.println("entry:"+entry);
+	//这里是简单的类型的value
+	value = parseResValue(Utils.copyByte(src, valueOffset+entry.getSize(), value.getSize()));
+	System.out.println("value:"+value);
+	bodySize = entry.getSize()+value.getSize();
+}</pre>
+<p><span class="Apple-style-span">判断flag的值，来进行不同的解析操作。这里需要注意这点。</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160203150045884" alt="" width="980" height="485"></span></p>
+<p><span class="Apple-style-span">看到解析结果，还是挺欣慰的，因为最难的地方我们解析成功了，而且看到结果我们很激动，就是我们想要的结果，但是这里需要解释的是，有了这些值我们构建public.xml内容和各个类型的xml内容是很简单，当然这里我们去构建了，感兴趣的同学可以去尝试一下。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span>这里的ResId的构造方法是：</span></p>
+<pre class="java">/**
+ * 获取资源id
+ * 这里高位是packid，中位是restypeid，地位是entryid
+ * @param entryid
+ * @return
+ */
+public static int getResId(int entryid){
+	return (((packId)&lt;&lt;24) | (((resTypeId) &amp; 0xFF)&lt;&lt;16) | (entryid &amp; 0xFFFF));
+}</pre>
+<p><span class="Apple-style-span">这里我们可以看到就是一个int类型的resId，</span></p>
+<p><span class="Apple-style-span">他的最高两个字节表示packId,系统资源id是：0x01，普通应用资源id是：0x7F</span></p>
+<p><span class="Apple-style-span">他的中间的两个字节表示resTypeId，类型id,这个值从0开始，比如我们例子中第一个类型是attr，那么他的resTypeId就是00</span></p>
+<p><span class="Apple-style-span">他的最低四个字节表示这个资源的顺序id，从1开始，逐渐累加1</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">项目下载地址：<a href="http://download.csdn.net/detail/jiangwei0910410003/9426712" target="_blank" data-original-title="" title="">http://download.csdn.net/detail/jiangwei0910410003/9426712</a></span></span></p>
+<h1><span class="Apple-style-span">五、技术概述</span></h1>
+<p><span class="Apple-style-span">上面我们就很蛋疼的解析完了所有的resource.arsc文件，当然内容有点多，所以有些地方可能没介绍清楚或者是有错误的地方，请多指正。当然关于Android编译之后的四个文件格式，我们已经介绍了三个了：</span></p>
+<p><span class="Apple-style-span">so文件格式、AndroidManifest.xml格式/资源文件.xml、resource.arsc</span></p>
+<p><span class="Apple-style-span">那么剩下就只有classes.dex这一个文件格式了，我们就算大功告成了。但是我想在这里说的是，这篇文章我们主要是介绍解析resource.arsc文件格式，那么写这篇文章的目的是什么呢？</span></p>
+<p><span class="Apple-style-span">有两个：</span></p>
+<p><span class="Apple-style-span">1、我们在使用apktool工具进行反编译的时候，经常出现一些莫名的一场信息，最多的就是NotFound ResId 0x0000XXX这些内容，那么这时候我们就可以去修复了，当然我们可以得到apktool的源码来解决这个问题，还可以就是使用我们自己写的这套解析代码也是可以的。</span></p>
+<p><span class="Apple-style-span">2、我们之前提过，解析resource.arsc文件之后，对resource.arsc文件格式如果有了解了之后，可以对资源文件名进行混淆，从而来减小apk包大小，我在之前的一篇文章：</span></p>
+<p><span class="Apple-style-span">Apk的签名机制：<a href="http://blog.csdn.net/jiangwei0910410003/article/details/50402000" target="_blank" data-original-title="" title="">http://blog.csdn.net/jiangwei0910410003/article/details/50402000</a></span></p>
+<p><span class="Apple-style-span">因为META-INF文件夹下的三个文件大小很大，原因就是他们内部保存了每个资源名称，我们在项目中有时候为了不造成冲突，就把资源名起的很长，那么这样就会导致apk的包很大。</span></p>
+<p><span class="Apple-style-span">同样resource.arsc文件也会很大，因为资源名都是需要保存的，但是我们知道Android中的混淆是不会对资源文件进行混淆的，所以这时候我们就可以通过这个思路来减小包apk的大小了。这个后续我会继续讲解的。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span></span></p>
+<p><span class="Apple-style-span">到这里我们还需要告诉一件事，那就是其实我们上面的解析工作，有一个更简单的方法就可以搞定了？那就是aapt命令？关于这个aapt是干啥的？网上有很多资料，他其实很简单就是将Android中的资源文件打包成resource.arsc即可:</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160219200855453" alt=""><br>
+</span></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">只有那些类型为res/animator、res/anim、res/color、res/drawable（非Bitmap文件，即非.png、.9.png、.jpg、.gif文件）、res/layout、res/menu、res/values和res/xml的资源文件均会从文本格式的XML文件编译成二进制格式的XML文件<br>
+这些XML资源文件之所要从文本格式编译成二进制格式，是因为：<br>
+1. 二进制格式的XML文件占用空间更小。这是由于所有XML元素的标签、属性名称、属性值和内容所涉及到的字符串都会被统一收集到一个字符串资源池中去，并且会去重。有了这个字符串资源池，原来使用字符串的地方就会被替换成一个索引到字符串资源池的整数值，从而可以减少文件的大小。<br>
+2. 二进制格式的XML文件解析速度更快。这是由于二进制格式的XML元素里面不再包含有字符串值，因此就避免了进行字符串解析，从而提高速度。<br>
+将XML资源文件从文本格式编译成二进制格式解决了空间占用以及解析效率的问题，但是对于Android资源管理框架来说，这只是完成了其中的一部分工作。Android资源管理框架的另外一个重要任务就是要根据资源ID来快速找到对应的资源。</span></span></p>
+<p><span class="Apple-style-span">那么下面我们用aapt命令就可以查看一下？</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">aapt命令在我们的AndroidSdk目录中：</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160219201043471" alt=""><br>
+</span></span></p>
+<p><span class="Apple-style-span">看到路径了：<span class="Apple-style-span">Android-SDK目录/build-tools/下面</span></span></p>
+<p><span class="Apple-style-span">我们也就知道了，这个目录下全是Android中build成一个apk的所有工具，这里再看一下这些工具的用途：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160219201420061" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">1、使用Android SDK提供的aapt.exe生成R.java类文件<br>
+2、使用Android SDK提供的aidl.exe把.aidl转成.java文件（如果没有aidl，则跳过这一步）<br>
+3、使用JDK提供的javac.exe编译.java类文件生成class文件<br>
+4、使用Android SDK提供的dx.bat命令行脚本生成classes.dex文件<br>
+5、使用Android SDK提供的aapt.exe生成资源包文件（包括res、assets、androidmanifest.xml等）<br>
+6、使用Android SDK提供的apkbuilder.bat生成未签名的apk安装文件<br>
+7、使用jdk的jarsigner.exe对未签名的包进行apk签名<br>
+</span></p>
+<p><span class="Apple-style-span">看到了吧。我们原来可以不借助任何IDE工具，也是可以出一个apk包的。哈哈~~</span></p>
+<p><span class="Apple-style-span">继续看aapt命令的用法，命令很简单：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">aapt l -a apk名称 &gt; demo.txt</span></span></p>
+<p><span class="Apple-style-span">将输入的结果定向到demo.txt中</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160219202834260" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">看到我们弄出来的内容，发现就是我们上面解析的AndroidManifest.xml内容，所以这个也是一个方法，当然aapt命令这里我为什么最后说呢？之前我们讲解的AndroidManifest.xml格式肯定是有用的，aapt命令只是系统提供给我们一个很好的工具，我们可以在反编译的过程中借助这个工具也是不错的选择。所以这里我就想说，以后我们记得有一个aapt命令就好了，他的用途还是很多的，可以单独编译成一个resource.arsc文件来，我们后面会用到这个命令。</span></p>
+<h1><span class="Apple-style-span">六、总结</span></h1>
+<p><span class="Apple-style-span">这篇文章篇幅有点长，所以我写的很蛋疼，但是得耐心的看，因为resource.arsc文件格式比AndroidManifest.xml文件格式复杂得多，所以解析起来很费劲的。也希望你们看完之后能多多支持，后面还有一篇解析classes.dex文件格式，当然这篇文章要等年后来才能动笔了，所以尽请期待，最好注大家新年快乐~~</span></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<div class="desc">
+<p style="text-align: center;"><strong><span class="Apple-style-span"><span style="font-size: large;">关注微信公众号，最新Android技术实时推送</span></span></strong></p>
+<div><img class="aligncenter" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160602145455307"></div>
+<div></div>
+<div><img class="aligncenter" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160606125422292"></div>
+<div></div>
+</div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>转载请注明：<a href="http://www.wjdiankong.cn/" data-original-title="" title="">尼古拉斯.赵四</a> » <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" data-original-title="" title="">Android逆向之旅—解析编译之后的Resource.arsc文件格式</a></p>
+
+      
+<div class="article-social">
+			<a href="javascript:;" data-action="ding" data-id="577" id="Addlike" class="action" data-original-title="" title=""><i class="fa fa-heart-o"></i>喜欢 (<span class="count">4</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox bdshare-button-style0-24" data-bd-bind="1520346796299"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="" data-original-title="分享到新浪微博"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_qzone fa fa-star" data-cmd="qzone" title="" data-original-title="分享到QQ空间"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="" data-original-title="分享到腾讯微博"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="qq fa fa-qq" data-cmd="sqq" title="" data-original-title="分享到QQ好友"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_renren fa fa-renren" data-cmd="renren" title="" data-original-title="分享到人人网"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="" data-original-title="分享到微信"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_more fa fa-ellipsis-h" data-cmd="more" data-original-title="" title=""></a></div></div></div></span>	
+</div>
+	</article>	
+				<footer class="article-footer">
+			</footer>
+	<nav class="article-nav">
+			<span class="article-nav-prev"><i class="fa fa-angle-double-left"></i> <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84androidmanifest%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" rel="prev">Android逆向之旅—解析编译之后的AndroidManifest文件格式</a></span>
+			<span class="article-nav-next"><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" rel="next">Android逆向之旅—解析编译之后的Dex文件格式</a>  <i class="fa fa-angle-double-right"></i></span>
+		</nav>
+
+		<div class="related_top">
+			<div class="related_posts"><ul class="related_img">
+
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/" title="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/timthumb.php" alt="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！"><br><span class="r_title">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/" title="全球首款短视频聚合应用「酱爆视频」开发技术介绍" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/timthumb(1).php" alt="全球首款短视频聚合应用「酱爆视频」开发技术介绍"><br><span class="r_title">全球首款短视频聚合应用「酱爆视频」开发技术介绍</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/timthumb(2).php" alt="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！"><br><span class="r_title">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/timthumb(3).php" alt="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇"><br><span class="r_title">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</span></a>
+		</li>
+	</ul>
+
+<div class="relates">
+<ul>
+<li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%aeid/">Android逆向之旅—Android中分析某拍短视频的数据请求加密协议(IDA动态调试SO)第二篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e6%9c%80%e5%90%8e%e4%b8%80%e7%af%87%e6%8a%80%e6%9c%af%e6%96%87%e7%ab%a0%ef%bc%9a%e5%be%ae%e4%bf%a1%e5%b0%8f%e7%a8%8b%e5%ba%8f%e6%b8%b8%e6%88%8f%e8%b7%b3%e4%b8%80%e8%b7%b3%e5%88%b7/">2017年最后一篇技术文章：微信小程序游戏”跳一跳”刷榜原理解析</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e7%a7%bb%e5%8a%a8%e5%ae%89%e5%85%a8%e8%91%97%e4%bd%9c%e3%80%8aandroid%e5%ba%94%e7%94%a8%e5%ae%89%e5%85%a8%e9%98%b2%e6%8a%a4%e5%92%8c%e9%80%86%e5%90%91%e5%88%86%e6%9e%90%e3%80%8b%e7%bb%88%e4%ba%8e/">移动安全著作《Android应用安全防护和逆向分析》终于发售了，赶紧来购买吧！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e4%b8%adjava%e5%92%8csmali%e8%bd%ac%e5%8c%96%e4%b8%80%e9%94%ae%e5%8c%96%e6%93%8d%e4%bd%9c%e5%b7%a5%e5%85%b7java2smali%e5%8e%9f%e7%90%86%e5%88%86%e6%9e%90/">Android中java和smali转化一键化操作工具java2smali原理分析</a></li>
+</ul></div></div>		</div>
+						<div id="respond" class="no_webshot">
+		<form action="http://www.wjdiankong.cn/wp-comments-post.php" method="post" id="commentform">
+		
+		<div class="comt-title">
+			<div class="comt-avatar pull-left">
+				<img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/saved_resource" width="54" height="54" alt="" class="avatar avatar-54 wp-user-avatar wp-user-avatar-54 photo avatar-default">			</div>
+			<div class="comt-author pull-left">
+			lopend <span>发表我的评论</span> &nbsp; <a class="switch-author" href="javascript:;" data-type="switch-author" style="font-size:12px;">换个身份</a>			</div>
+			<a id="cancel-comment-reply-link" class="pull-right" href="javascript:;">取消评论</a>
+		</div>
+		
+		<div class="comt">
+			<div class="comt-box">
+				<textarea placeholder="写点什么..." class="input-block-level comt-area" name="comment" id="comment" cols="100%" rows="3" tabindex="1" onkeydown="if(event.ctrlKey&amp;&amp;event.keyCode==13){document.getElementById(&#39;submit&#39;).click();return false};"></textarea>
+				<div class="comt-ctrl">
+					<button class="btn btn-primary pull-right" type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-check-square-o"></i> 提交评论</button>
+					<div class="comt-tips pull-right"><input type="hidden" name="comment_post_ID" value="577" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="4548e17973"></p><p style="display: none;"></p><div class="comt-tip comt-loading" style="display: none;">正在提交, 请稍候...</div><div class="comt-tip comt-error" style="display: none;">#</div></div>
+					<span data-type="comment-insert-smilie" class="muted comt-smilie"><i class="fa fa-smile-o"></i> 表情</span>
+					<span class="muted comt-mailme"><label for="comment_mail_notify" class="checkbox inline" style="padding-top:0"><input type="checkbox" name="comment_mail_notify" id="comment_mail_notify" value="comment_mail_notify" checked="checked">有人回复时邮件通知我</label></span>
+				</div>
+			</div>
+
+												<div class="comt-comterinfo" id="comment-author-info" style="display:none">
+						<h4>Hi，您需要填写昵称和邮箱！</h4>
+						<ul>
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="lopend" tabindex="2" placeholder="昵称"><span class="help-inline">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="2264373600@qq.com" tabindex="3" placeholder="邮箱"><span class="help-inline">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">网址</label><input class="ipt" type="text" name="url" id="url" value="http://aheadlcx.com" tabindex="4" placeholder="网址"><span class="help-inline">网址</span></li>
+						</ul>
+					</div>
+									</div>
+
+		
+	<input type="hidden" id="ak_js" name="ak_js" value="1520346795386"></form>
+	</div>
+<div id="postcomments">
+	<div id="comments">
+		<i class="fa fa-comments-o"></i> <b> (1)</b>个小伙伴在吐槽
+	</div>
+	<ol class="commentlist">
+			</ol>
+	<div class="commentnav">
+			</div>
+</div>
+			</div>
+</div>
+<aside class="sidebar">	
+<div class="widget widget_text"><div class="textwidget"><div class="social">
+</div></div></div>
+
+<div class="widget widget_text"><div class="title"><h2>安全书籍</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center;">
+<font color="#FF0000" size="4"><b>《Android应用安全防护和逆向分析》</b></font>
+<br><br>
+<font color="#FF6655" size="3"><b>360创始人周鸿祎、CSDN创始人蒋涛、看雪创始人段钢联袂推荐</b></font>
+<br><br>
+<font color="#078899" size="2"><b>零基础学习移动安全逆向，手把手带你进入安全逆向领域！安全不息，逆向不止！让别人的应用都成为我们手中的炮灰！</b></font><br><br>
+<font color="#070449" size="2"><b>读者技术交流QQ群：682646223</b></font><br><br>
+<font color="#00A67C" size="4"><b>购买地址：</b></font>
+<a href="https://item.jd.com/12271376.html"><font color="#FF0000" size="4"><b>京东</b></font></a>
+<a href="https://detail.tmall.com/item.htm?id=561791430421"><font color="#FF0000" size="4"><b>天猫</b></font></a>
+<br><br>
+<a href="https://item.jd.com/12271376.html"><img style="width:200px; height:200px" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20171218160639075"></a>
+<br><br>
+</div></div>
+		</div><div class="widget widget_text"><div class="title"><h2>微信公众号</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent{
+			width: 300px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg img{
+			width: 220px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent">
+
+											<div class="desc">
+                                                关注微信公众号，技术干货实时分享
+                                            </div>
+                                            <div class="subtitle">
+                                                公众号名称：编码美丽
+                                            </div>
+
+                                            <div class="contentimg">
+                                                <img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20160822091821005">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的技术圈</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 340px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 140px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫进入技术圈进行问题答疑和技术交流
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20171030170137755">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的微信</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 300px;
+			height: 280px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 200px;
+			height: 200px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫加我微信交流问题
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20170113090254862">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>小编众筹</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parentss{
+			width: 360px;
+			height: 360px;
+			margin:0 auto;
+			margin-top: 40px;
+		}
+
+		.contentimgss img{
+			width: 320px;
+			height: 320px;
+			margin: 0 auto;
+			display: block;
+		}
+
+	</style>
+
+
+
+<div class="parentss">
+
+                                            <div class="contentimgss">
+                                                <img src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/get_money1.png">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>酱爆视频</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center">
+<b></b><div class="text" style=" text-align:center;"><b><font color="#FF6655" size="5">酱爆视频</font>
+<br><br>
+<img style="width:80px; height:80px" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/20151210222101553">
+</b></div><b><b><br>
+<font color="#078899" size="3"><b>全球首款短视频聚合应用「酱爆视频」正式发布</b></font>
+<br><br>
+<font color="#00A67C" size="2"><b>别人等车干着急，我在酱爆看视频</b></font>
+<br>
+<font color="#00A67C" size="2"><b>想你说想，为你所做！</b></font>
+<br>
+<font color="#00A67C" size="2"><b>不负众望，就在酱爆！</b></font>
+<br><br>
+<a href="http://www.wjdiankong.cn/%E5%85%A8%E7%90%83%E9%A6%96%E6%AC%BE%E7%9F%AD%E8%A7%86%E9%A2%91%E8%81%9A%E5%90%88%E5%BA%94%E7%94%A8%E3%80%8C%E9%85%B1%E7%88%86%E8%A7%86%E9%A2%91%E3%80%8D%E5%BC%80%E5%8F%91%E6%8A%80%E6%9C%AF%E4%BB%8B/"><font color="#FF0000" size="4"><div class="text" style=" text-align:center;">点击查看详情</div></font></a></b></b><br></div></div>
+		</div>		<div class="widget widget_recent_entries">		<div class="title"><h2>近期文章</h2></div>		<ul>
+					<li>
+				<a href="http://www.wjdiankong.cn/python%e7%88%ac%e5%8f%96%e5%ba%94%e7%94%a8%e3%80%8c%e8%8b%b1%e8%af%ad%e6%b5%81%e5%88%a9%e8%af%b4%e3%80%8d%e7%9a%84%e9%85%8d%e9%9f%b3%e8%a7%86%e9%a2%91%e6%95%b0%e6%8d%ae%e7%ac%ac%e4%b8%80%e6%ac%a1/">Python爬取应用「英语流利说」的配音视频数据(第一次这么粉一个人)</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e8%ae%be%e8%ae%a1%e6%a8%aa%e7%ab%96%e5%b1%8f/">全球首款短视频聚合应用「酱爆视频」设计横竖屏的海报宣传图</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a>
+						</li>
+				</ul>
+		</div>		<div class="widget widget_categories"><div class="title"><h2>分类目录</h2></div>		<ul>
+	<li class="cat-item cat-item-2"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a> (186)
+</li>
+	<li class="cat-item cat-item-10"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a> (4)
+</li>
+	<li class="cat-item cat-item-3"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a> (29)
+</li>
+	<li class="cat-item cat-item-4"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a> (26)
+</li>
+	<li class="cat-item cat-item-11"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a> (26)
+</li>
+	<li class="cat-item cat-item-16"><a href="http://www.wjdiankong.cn/category/python/">Python</a> (2)
+</li>
+	<li class="cat-item cat-item-13"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a> (2)
+</li>
+	<li class="cat-item cat-item-15"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a> (67)
+</li>
+	<li class="cat-item cat-item-9"><a href="http://www.wjdiankong.cn/category/%e5%bc%80%e5%8f%91%e5%b7%a5%e5%85%b7%e7%af%87/">开发工具篇</a> (12)
+</li>
+	<li class="cat-item cat-item-8"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e5%ba%93%e6%8a%80%e6%9c%af%e7%af%87/">数据库技术篇</a> (6)
+</li>
+	<li class="cat-item cat-item-6"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%e5%92%8c%e7%ae%97%e6%b3%95/">数据结构和算法</a> (8)
+</li>
+	<li class="cat-item cat-item-1"><a href="http://www.wjdiankong.cn/category/uncategorized/">未分类</a> (3)
+</li>
+	<li class="cat-item cat-item-14"><a href="http://www.wjdiankong.cn/category/%e7%bd%91%e9%a1%b5%e5%89%8d%e7%ab%af/">网页前端</a> (1)
+</li>
+		</ul>
+</div><div class="widgetRoller" style="position: fixed; top: 10px; z-index: 0; width: 360px; display: none;"></div></aside></section>
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="copyright pull-left">
+         <a href="http://yusi123.com/" title="欲思博客">欲思博客</a> 版权所有，保留一切权利 · <a href="http://yusi123.com/sitemap.xml" title="站点地图">站点地图</a>   ·   基于WordPress构建   © 2011-2014  ·   托管于 <a rel="nofollow" target="_blank" href="http://yusi123.com/go/aliyun">阿里云主机</a> &amp; <a rel="nofollow" target="_blank" href="http://yusi123.com/go/qiniu">七牛云存储</a>
+        </div>
+        <div class="trackcode pull-right">
+            <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?44932c23fd6a7e829cb31896e6c9c5a7";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* <![CDATA[ */
+var rcGlobal = {
+	serverUrl		:'http://www.wjdiankong.cn',
+	infoTemp		:'%REVIEWER% 在 %POST%',
+	loadingText		:'正在加载',
+	noCommentsText	:'没有任何评论',
+	newestText		:'&laquo; 最新的',
+	newerText		:'&laquo; 上一页',
+	olderText		:'下一页 &raquo;',
+	showContent		:'1',
+	external		:'1',
+	avatarSize		:'32',
+	avatarPosition	:'left',
+	anonymous		:'匿名'
+};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/form.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/wp-recentcomments.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Resource.arsc文件格式 _ 尼古拉斯.赵四_files/wp-embed.min.js"></script>
+<script>with(document)0[(getElementsByTagName("head")[0]||body).appendChild(createElement("script")).src="http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion="+~(-new Date()/36e5)];</script>
+<div class="rollto" style="display: none;"><button class="btn btn-inverse" data-type="totop" title="回顶部"><i class="fa fa-arrow-up"></i></button><button class="btn btn-inverse" data-type="torespond" title="发评论"><i class="fa fa-comment-o"></i></button></div></body></html>

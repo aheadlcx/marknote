@@ -10,7 +10,10 @@
 	* [热修复](/androidnote/app/hotfix.md)
 
 * Android Framework Ui analyze
-	* [Android ListView与RecyclerView对比浅析--缓存机制](https://mp.weixin.qq.com/s/_1-5REzMQibPLcK79Hz4gg)
+	* [列表优化](/androidnote/app/listview.md)
+
+* 性能优化
+	* [LeakCanary 检测内存泄露原理](/androidnote//app/leakcanary.md)
 	
 * 插件化相关
 	* [插件化](/androidnote/app/plugins.md)
@@ -25,9 +28,15 @@
 * Interview 总结
 	* [面试总结](/androidnote/app/interview/interviewNote.md)
 
-* [跨进程通讯](/androidnote/common/ipc.md)
+* [跨进程通讯]
+	* [IPC 通讯的基本方式](/androidnote/common/ipc.md)
+	* [Android 上的 IPC 方法](/androidnote/app/androidipc.md)
 
 * Java Base Knowledge
 	* [Java Reflection 为何慢](/javanote/reflection.md)
+	* [RxJava 常用操作符](/javanote/commonRxJavaOperator.md)
+	* [线程的状态](/javanote/threadstate/md)
 * [Android Base 知识点](/androidnote/app/androidbase.md)
+* Android 特殊问题
+	* [Toast 出发的 Adding window failed](/androidnote/app/TransactionTooLargeException.md)
 * [undo][/androidnote/todo.md]

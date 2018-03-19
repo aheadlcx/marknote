@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<!-- saved from url=(0162)http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=10,IE=9,IE=8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/favicon.ico" type="image/x-icon">
+<title>Android解析编译之后的所有文件(so,dex,xml,arsc)格式 | 尼古拉斯.赵四</title>
+<script src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/hm.js"></script><script>
+window._deel = {name: '尼古拉斯.赵四',url: 'http://www.wjdiankong.cn/wp-content/themes/yusi1.0', ajaxpager: 'on', commenton: 1, roll: [,]}
+</script>
+
+<!-- All in One SEO Pack 2.3.4.2 by Michael Torbert of Semper Fi Web Design[305,403] -->
+<meta name="description" itemprop="description" content="我们在之前一篇一篇介绍了如何解析Android中编译之后的所有文件格式，所有的工作都完成了，这里我们就来做个总结，我们为什么要做这些工作： 第一篇：解析so文件格式 点击进入 这里我们解析so文件，主要是为了修改so中内容，在so文件中添加字符串内容，同时我们可以做到对so的加密工作，从而达到apk的">
+
+<link rel="canonical" href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/">
+<!-- /all in one seo pack -->
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/www.wjdiankong.cn\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.5.1"}};
+			!function(a,b,c){function d(a){var c,d,e,f=b.createElement("canvas"),g=f.getContext&&f.getContext("2d"),h=String.fromCharCode;if(!g||!g.fillText)return!1;switch(g.textBaseline="top",g.font="600 32px Arial",a){case"flag":return g.fillText(h(55356,56806,55356,56826),0,0),f.toDataURL().length>3e3;case"diversity":return g.fillText(h(55356,57221),0,0),c=g.getImageData(16,16,1,1).data,d=c[0]+","+c[1]+","+c[2]+","+c[3],g.fillText(h(55356,57221,55356,57343),0,0),c=g.getImageData(16,16,1,1).data,e=c[0]+","+c[1]+","+c[2]+","+c[3],d!==e;case"simple":return g.fillText(h(55357,56835),0,0),0!==g.getImageData(16,16,1,1).data[0];case"unicode8":return g.fillText(h(55356,57135),0,0),0!==g.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel="stylesheet" id="wp-recentcomments-css" href="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/wp-recentcomments.css" type="text/css" media="screen">
+<link rel="stylesheet" id="style-css" href="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/style.css" type="text/css" media="all">
+<script type="text/javascript" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/jquery.min.js"></script>
+<script type="text/javascript" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/jquery.js"></script>
+<link rel="https://api.w.org/" href="http://www.wjdiankong.cn/wp-json/">
+<link rel="prev" title="Android逆向之旅—解析编译之后的Dex文件格式" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<link rel="next" title="如何使用Ant脚本编译出Jar和Apk包" href="http://www.wjdiankong.cn/%e5%a6%82%e4%bd%95%e4%bd%bf%e7%94%a8ant%e8%84%9a%e6%9c%ac%e7%bc%96%e8%af%91%e5%87%bajar%e5%92%8capk%e5%8c%85/">
+<link rel="shortlink" href="http://www.wjdiankong.cn/?p=581">
+<link rel="alternate" type="application/json+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584%25e6%2589%2580%25e6%259c%2589%25e6%2596%2587%25e4%25bb%25b6sodexxmlarsc%25e6%25a0%25bc%25e5%25bc%258f%2F">
+<link rel="alternate" type="text/xml+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584%25e6%2589%2580%25e6%259c%2589%25e6%2596%2587%25e4%25bb%25b6sodexxmlarsc%25e6%25a0%25bc%25e5%25bc%258f%2F&amp;format=xml">
+<meta name="keywords" content="Android技术篇, 安全和逆向">
+<meta name="description" content="我们在之前一篇一篇介绍了如何解析Android中编译之后的所有文件格式，所有的工作都完成了，这里我们就来做个总结，我们为什么要做这些工作：  第一篇：解析so文件格式  点击进入  这里我们解析so文件，主要是为了修改so中内容，在so文件中添加字符串内容，同时我们可以做到对so的加密工作，从而达到apk的底层加固策略。同时我们了解了so文件的格式之后，对反编译底层的代码也是很有帮助的。  第二篇：解析AndroidManifest.x">
+<!--[if lt IE 9]><script src="http://www.wjdiankong.cn/wp-content/themes/yusi1.0/js/html5.js"></script><![endif]-->
+<script src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/share.js"></script><link href="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/share.css" rel="styleSheet" type="text/css"></head>
+<body class="single single-post postid-581 single-format-standard">
+
+<header id="header" class="header">
+<div class="container-inner">
+ <div class="yusi-logo">
+                    <a href="http://www.wjdiankong.cn/">
+                        <h1>
+                                                        <span class="yusi-mono">尼古拉斯.赵四</span>
+                                                        <span class="yusi-bloger">生死看淡，不服就干！</span>
+                                                    </h1>
+                    </a>
+    </div>
+</div>
+
+	<div id="nav-header" class="navbar fixed">
+		
+		<ul class="nav">
+			<li id="menu-item-636" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-636"><a href="http://www.wjdiankong.cn/">首页</a></li>
+<li id="menu-item-637" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-637"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a></li>
+<li id="menu-item-904" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-904"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a></li>
+<li id="menu-item-642" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-642"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a></li>
+<li id="menu-item-638" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-638"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a></li>
+<li id="menu-item-639" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-639"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a></li>
+<li id="menu-item-640" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-640"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a></li>
+<li id="menu-item-641" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-641"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a></li>
+<li id="menu-item-841" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-841"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a></li>
+<li id="menu-item-949" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-949"><a href="http://www.wjdiankong.cn/category/python/">Python</a></li>
+<li style="float:right;">
+                    <div class="toggle-search"><i class="fa fa-search"></i></div>
+<div class="search-expand" style="display: none;"><div class="search-expand-inner"><form method="get" class="searchform themeform" onsubmit="location.href=&#39;http://www.wjdiankong.cn/search/&#39; + encodeURIComponent(this.s.value).replace(/%20/g, &#39;+&#39;); return false;" action="http://www.wjdiankong.cn/"><div> <input type="ext" class="search" name="s" onblur="if(this.value==&#39;&#39;)this.value=&#39;search...&#39;;" onfocus="if(this.value==&#39;search...&#39;)this.value=&#39;&#39;;" value="search..."></div></form></div></div>
+</li>
+		</ul><div class="screen-mini"><button data-type="screen-nav" class="btn btn-inverse screen-nav"><i class="fa fa-list"></i></button></div>
+	</div>
+	
+</header>
+<section class="container"><div class="speedbar">
+					<div class="pull-right">
+				<i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/wp-login.php">登录</a>			</div>
+				<div class="toptip"><strong class="text-success"><i class="fa fa-volume-up"></i> </strong> 关注微信公众号：“<font color="#FF666A"><b>编码美丽</b></font>”技术干货实时推荐，欢迎访问我的github：<a href="https://github.com/fourbrother">点击进入</a></div>
+	</div>
+	<div class="content-wrap">
+	<div class="content">
+
+				<header class="article-header">
+			<h1 class="article-title"><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/">Android解析编译之后的所有文件(so,dex,xml,arsc)格式</a></h1>
+			<div class="meta">
+				<span id="mute-category" class="muted"><i class="fa fa-list-alt"></i><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/"> Android技术篇</a></span>				<span class="muted"><i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/author/jiangwei212/">尼古拉斯.赵四</a></span>
+				<time class="muted"><i class="fa fa-clock-o"></i> 2年前 (2016-05-12)</time>
+				<span class="muted"><i class="fa fa-eye"></i> 9041℃</span>
+				<span class="muted"><i class="fa fa-comments-o"></i> <a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#comments">0评论</a></span>							</div>
+		</header>
+		<article class="article-content">
+			<p><span class="Apple-style-span">我们在之前一篇一篇介绍了如何解析Android中编译之后的所有文件格式，所有的工作都完成了，这里我们就来做个总结，我们为什么要做这些工作：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">第一篇：解析so文件格式</span></span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-soelf%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%E8%AF%A6%E8%A7%A3/" data-original-title="" title="">点击进入</a></p>
+<p><span class="Apple-style-span">这里我们解析so文件，主要是为了修改so中内容，在so文件中添加字符串内容，同时我们可以做到对so的加密工作，从而达到apk的底层加固策略。同时我们了解了so文件的格式之后，对反编译底层的代码也是很有帮助的。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">第二篇：解析AndroidManifest.xml文件格式</span></span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84androidmanifest%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title="">点击进入</a></p>
+<p><span class="Apple-style-span">这里我们解析AndroidManifest.xml文件，主要是为了修复我们在使用apktool进行反编译的时候出现的一些错误信息，同时也了解到apktool反编译的工作原理，当然这里还可以解析Android中的其他资源文件xml。这里我们还可以对apk进行加固，就是通过修改AndroidManifest.xml文件内容，防止apktool这样的工具进行反编译。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span>这里我们可以使用aapt命令更为方便，具体看文章内容的总结部分。这里就不在赘述了。</span><br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">第三篇：解析resource.arsc文件格式</span></span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84resource-arsc%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title=""><span class="Apple-style-span">点击进入 </span></a></p>
+<p><span class="Apple-style-span">这里我们解析resource.arsc文件，主要是为了修复我们在使用apktool进行反编译的时候出现的一些错误信息，同时也了解到apktool反编译的工作原理，同时我们可以减小apk包的大小，主要是通过对resource.arsc中资源文件名进行混淆，减小命名的大小。因为本身Android中是不对资源文件进行混淆工作的。同时我们可以修改resource.arsc文件内容，防止apktool这样的工具进行反编译。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span>这里我们可以使用aapt命令更为方便，具体看文章内容的总结部分。这里就不在赘述了。</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">第四篇：解析dex文件格式</span></span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84dex%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title=""><span class="Apple-style-span">点击进入 </span></a></p>
+<p><span class="Apple-style-span">这里我们解析dex文件，主要是为了更好的了解Android中的代码结构，同时我们解析完dex之后，就知道代码的结构，调用哪些api,从而判断执行了某些功能，比如判断apk是否调用了系统的api，是否包含广告sdk的api等信息，同时我们知道dex的结构之后，我们就可以对dex进行加密工作，从而做到上层对apk进行加固的工作。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span>这里可以使用dexdump命令更为方便，具体看文章内容的总结部分，这里就不在赘述了。</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">总结</span></span></p>
+<p><span class="Apple-style-span">所以关于Android中的编译之后的文件解析工作就算告一段落，这些知识也是我们后面的逆向基础，特别是在遇到逆向失败的时候，我们能够通过具体的错误信息来定位问题，当然这些文件格式的了解也对让我们对Android中apk包生成的流程有个大体的了解。</span></p>
+<p>&nbsp;</p>
+<p style="text-align: center;"><strong><span class="Apple-style-span"><span style="font-size: large;">关注微信公众号，最新Android技术实时推送</span></span></strong></p>
+<div><img class="aligncenter" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20160602145455307"></div>
+<div></div>
+<div><img class="aligncenter" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20160606125422292"></div>
+<div></div>
+<p>&nbsp;</p>
+<p>转载请注明：<a href="http://www.wjdiankong.cn/" data-original-title="" title="">尼古拉斯.赵四</a> » <a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/" data-original-title="" title="">Android解析编译之后的所有文件(so,dex,xml,arsc)格式</a></p>
+
+      
+<div class="article-social">
+			<a href="javascript:;" data-action="ding" data-id="581" id="Addlike" class="action" data-original-title="" title=""><i class="fa fa-heart-o"></i>喜欢 (<span class="count">3</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox bdshare-button-style0-24" data-bd-bind="1520346786224"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="" data-original-title="分享到新浪微博"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="bds_qzone fa fa-star" data-cmd="qzone" title="" data-original-title="分享到QQ空间"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="" data-original-title="分享到腾讯微博"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="qq fa fa-qq" data-cmd="sqq" title="" data-original-title="分享到QQ好友"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="bds_renren fa fa-renren" data-cmd="renren" title="" data-original-title="分享到人人网"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="" data-original-title="分享到微信"></a><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/#" class="bds_more fa fa-ellipsis-h" data-cmd="more" data-original-title="" title=""></a></div></div></div></span>	
+</div>
+	</article>	
+				<footer class="article-footer">
+			</footer>
+	<nav class="article-nav">
+			<span class="article-nav-prev"><i class="fa fa-angle-double-left"></i> <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" rel="prev">Android逆向之旅—解析编译之后的Dex文件格式</a></span>
+			<span class="article-nav-next"><a href="http://www.wjdiankong.cn/%e5%a6%82%e4%bd%95%e4%bd%bf%e7%94%a8ant%e8%84%9a%e6%9c%ac%e7%bc%96%e8%af%91%e5%87%bajar%e5%92%8capk%e5%8c%85/" rel="next">如何使用Ant脚本编译出Jar和Apk包</a>  <i class="fa fa-angle-double-right"></i></span>
+		</nav>
+
+		<div class="related_top">
+			<div class="related_posts"><ul class="related_img">
+
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/" title="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！" target="_blank">
+		<img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/timthumb.php" alt="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！"><br><span class="r_title">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/" title="全球首款短视频聚合应用「酱爆视频」开发技术介绍" target="_blank">
+		<img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/timthumb(1).php" alt="全球首款短视频聚合应用「酱爆视频」开发技术介绍"><br><span class="r_title">全球首款短视频聚合应用「酱爆视频」开发技术介绍</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！" target="_blank">
+		<img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/timthumb(2).php" alt="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！"><br><span class="r_title">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇" target="_blank">
+		<img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/timthumb(3).php" alt="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇"><br><span class="r_title">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</span></a>
+		</li>
+	</ul>
+
+<div class="relates">
+<ul>
+<li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%aeid/">Android逆向之旅—Android中分析某拍短视频的数据请求加密协议(IDA动态调试SO)第二篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e6%9c%80%e5%90%8e%e4%b8%80%e7%af%87%e6%8a%80%e6%9c%af%e6%96%87%e7%ab%a0%ef%bc%9a%e5%be%ae%e4%bf%a1%e5%b0%8f%e7%a8%8b%e5%ba%8f%e6%b8%b8%e6%88%8f%e8%b7%b3%e4%b8%80%e8%b7%b3%e5%88%b7/">2017年最后一篇技术文章：微信小程序游戏”跳一跳”刷榜原理解析</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e7%a7%bb%e5%8a%a8%e5%ae%89%e5%85%a8%e8%91%97%e4%bd%9c%e3%80%8aandroid%e5%ba%94%e7%94%a8%e5%ae%89%e5%85%a8%e9%98%b2%e6%8a%a4%e5%92%8c%e9%80%86%e5%90%91%e5%88%86%e6%9e%90%e3%80%8b%e7%bb%88%e4%ba%8e/">移动安全著作《Android应用安全防护和逆向分析》终于发售了，赶紧来购买吧！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e4%b8%adjava%e5%92%8csmali%e8%bd%ac%e5%8c%96%e4%b8%80%e9%94%ae%e5%8c%96%e6%93%8d%e4%bd%9c%e5%b7%a5%e5%85%b7java2smali%e5%8e%9f%e7%90%86%e5%88%86%e6%9e%90/">Android中java和smali转化一键化操作工具java2smali原理分析</a></li>
+</ul></div></div>		</div>
+						<div id="respond" class="no_webshot">
+		<form action="http://www.wjdiankong.cn/wp-comments-post.php" method="post" id="commentform">
+		
+		<div class="comt-title">
+			<div class="comt-avatar pull-left">
+				<img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/saved_resource" width="54" height="54" alt="" class="avatar avatar-54 wp-user-avatar wp-user-avatar-54 photo avatar-default">			</div>
+			<div class="comt-author pull-left">
+			lopend <span>发表我的评论</span> &nbsp; <a class="switch-author" href="javascript:;" data-type="switch-author" style="font-size:12px;">换个身份</a>			</div>
+			<a id="cancel-comment-reply-link" class="pull-right" href="javascript:;">取消评论</a>
+		</div>
+		
+		<div class="comt">
+			<div class="comt-box">
+				<textarea placeholder="写点什么..." class="input-block-level comt-area" name="comment" id="comment" cols="100%" rows="3" tabindex="1" onkeydown="if(event.ctrlKey&amp;&amp;event.keyCode==13){document.getElementById(&#39;submit&#39;).click();return false};"></textarea>
+				<div class="comt-ctrl">
+					<button class="btn btn-primary pull-right" type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-check-square-o"></i> 提交评论</button>
+					<div class="comt-tips pull-right"><input type="hidden" name="comment_post_ID" value="581" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="b2f0a024bc"></p><p style="display: none;"></p><div class="comt-tip comt-loading" style="display: none;">正在提交, 请稍候...</div><div class="comt-tip comt-error" style="display: none;">#</div></div>
+					<span data-type="comment-insert-smilie" class="muted comt-smilie"><i class="fa fa-smile-o"></i> 表情</span>
+					<span class="muted comt-mailme"><label for="comment_mail_notify" class="checkbox inline" style="padding-top:0"><input type="checkbox" name="comment_mail_notify" id="comment_mail_notify" value="comment_mail_notify" checked="checked">有人回复时邮件通知我</label></span>
+				</div>
+			</div>
+
+												<div class="comt-comterinfo" id="comment-author-info" style="display:none">
+						<h4>Hi，您需要填写昵称和邮箱！</h4>
+						<ul>
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="lopend" tabindex="2" placeholder="昵称"><span class="help-inline">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="2264373600@qq.com" tabindex="3" placeholder="邮箱"><span class="help-inline">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">网址</label><input class="ipt" type="text" name="url" id="url" value="http://aheadlcx.com" tabindex="4" placeholder="网址"><span class="help-inline">网址</span></li>
+						</ul>
+					</div>
+									</div>
+
+		
+	<input type="hidden" id="ak_js" name="ak_js" value="1520346785666"></form>
+	</div>
+<div id="postcomments">
+	<div id="comments">
+		<i class="fa fa-comments-o"></i> <b> (1)</b>个小伙伴在吐槽
+	</div>
+	<ol class="commentlist">
+			</ol>
+	<div class="commentnav">
+			</div>
+</div>
+			</div>
+</div>
+<aside class="sidebar">	
+<div class="widget widget_text"><div class="textwidget"><div class="social">
+</div></div></div>
+
+<div class="widget widget_text"><div class="title"><h2>安全书籍</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center;">
+<font color="#FF0000" size="4"><b>《Android应用安全防护和逆向分析》</b></font>
+<br><br>
+<font color="#FF6655" size="3"><b>360创始人周鸿祎、CSDN创始人蒋涛、看雪创始人段钢联袂推荐</b></font>
+<br><br>
+<font color="#078899" size="2"><b>零基础学习移动安全逆向，手把手带你进入安全逆向领域！安全不息，逆向不止！让别人的应用都成为我们手中的炮灰！</b></font><br><br>
+<font color="#070449" size="2"><b>读者技术交流QQ群：682646223</b></font><br><br>
+<font color="#00A67C" size="4"><b>购买地址：</b></font>
+<a href="https://item.jd.com/12271376.html"><font color="#FF0000" size="4"><b>京东</b></font></a>
+<a href="https://detail.tmall.com/item.htm?id=561791430421"><font color="#FF0000" size="4"><b>天猫</b></font></a>
+<br><br>
+<a href="https://item.jd.com/12271376.html"><img style="width:200px; height:200px" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20171218160639075"></a>
+<br><br>
+</div></div>
+		</div><div class="widget widget_text"><div class="title"><h2>微信公众号</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent{
+			width: 300px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg img{
+			width: 220px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent">
+
+											<div class="desc">
+                                                关注微信公众号，技术干货实时分享
+                                            </div>
+                                            <div class="subtitle">
+                                                公众号名称：编码美丽
+                                            </div>
+
+                                            <div class="contentimg">
+                                                <img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20160822091821005">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的技术圈</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 340px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 140px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫进入技术圈进行问题答疑和技术交流
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20171030170137755">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的微信</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 300px;
+			height: 280px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 200px;
+			height: 200px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫加我微信交流问题
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20170113090254862">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>小编众筹</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parentss{
+			width: 360px;
+			height: 360px;
+			margin:0 auto;
+			margin-top: 40px;
+		}
+
+		.contentimgss img{
+			width: 320px;
+			height: 320px;
+			margin: 0 auto;
+			display: block;
+		}
+
+	</style>
+
+
+
+<div class="parentss">
+
+                                            <div class="contentimgss">
+                                                <img src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/get_money1.png">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>酱爆视频</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center">
+<b></b><div class="text" style=" text-align:center;"><b><font color="#FF6655" size="5">酱爆视频</font>
+<br><br>
+<img style="width:80px; height:80px" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/20151210222101553">
+</b></div><b><b><br>
+<font color="#078899" size="3"><b>全球首款短视频聚合应用「酱爆视频」正式发布</b></font>
+<br><br>
+<font color="#00A67C" size="2"><b>别人等车干着急，我在酱爆看视频</b></font>
+<br>
+<font color="#00A67C" size="2"><b>想你说想，为你所做！</b></font>
+<br>
+<font color="#00A67C" size="2"><b>不负众望，就在酱爆！</b></font>
+<br><br>
+<a href="http://www.wjdiankong.cn/%E5%85%A8%E7%90%83%E9%A6%96%E6%AC%BE%E7%9F%AD%E8%A7%86%E9%A2%91%E8%81%9A%E5%90%88%E5%BA%94%E7%94%A8%E3%80%8C%E9%85%B1%E7%88%86%E8%A7%86%E9%A2%91%E3%80%8D%E5%BC%80%E5%8F%91%E6%8A%80%E6%9C%AF%E4%BB%8B/"><font color="#FF0000" size="4"><div class="text" style=" text-align:center;">点击查看详情</div></font></a></b></b><br></div></div>
+		</div>		<div class="widget widget_recent_entries">		<div class="title"><h2>近期文章</h2></div>		<ul>
+					<li>
+				<a href="http://www.wjdiankong.cn/python%e7%88%ac%e5%8f%96%e5%ba%94%e7%94%a8%e3%80%8c%e8%8b%b1%e8%af%ad%e6%b5%81%e5%88%a9%e8%af%b4%e3%80%8d%e7%9a%84%e9%85%8d%e9%9f%b3%e8%a7%86%e9%a2%91%e6%95%b0%e6%8d%ae%e7%ac%ac%e4%b8%80%e6%ac%a1/">Python爬取应用「英语流利说」的配音视频数据(第一次这么粉一个人)</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e8%ae%be%e8%ae%a1%e6%a8%aa%e7%ab%96%e5%b1%8f/">全球首款短视频聚合应用「酱爆视频」设计横竖屏的海报宣传图</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a>
+						</li>
+				</ul>
+		</div>		<div class="widget widget_categories"><div class="title"><h2>分类目录</h2></div>		<ul>
+	<li class="cat-item cat-item-2"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a> (186)
+</li>
+	<li class="cat-item cat-item-10"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a> (4)
+</li>
+	<li class="cat-item cat-item-3"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a> (29)
+</li>
+	<li class="cat-item cat-item-4"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a> (26)
+</li>
+	<li class="cat-item cat-item-11"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a> (26)
+</li>
+	<li class="cat-item cat-item-16"><a href="http://www.wjdiankong.cn/category/python/">Python</a> (2)
+</li>
+	<li class="cat-item cat-item-13"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a> (2)
+</li>
+	<li class="cat-item cat-item-15"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a> (67)
+</li>
+	<li class="cat-item cat-item-9"><a href="http://www.wjdiankong.cn/category/%e5%bc%80%e5%8f%91%e5%b7%a5%e5%85%b7%e7%af%87/">开发工具篇</a> (12)
+</li>
+	<li class="cat-item cat-item-8"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e5%ba%93%e6%8a%80%e6%9c%af%e7%af%87/">数据库技术篇</a> (6)
+</li>
+	<li class="cat-item cat-item-6"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%e5%92%8c%e7%ae%97%e6%b3%95/">数据结构和算法</a> (8)
+</li>
+	<li class="cat-item cat-item-1"><a href="http://www.wjdiankong.cn/category/uncategorized/">未分类</a> (3)
+</li>
+	<li class="cat-item cat-item-14"><a href="http://www.wjdiankong.cn/category/%e7%bd%91%e9%a1%b5%e5%89%8d%e7%ab%af/">网页前端</a> (1)
+</li>
+		</ul>
+</div></aside></section>
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="copyright pull-left">
+         <a href="http://yusi123.com/" title="欲思博客">欲思博客</a> 版权所有，保留一切权利 · <a href="http://yusi123.com/sitemap.xml" title="站点地图">站点地图</a>   ·   基于WordPress构建   © 2011-2014  ·   托管于 <a rel="nofollow" target="_blank" href="http://yusi123.com/go/aliyun">阿里云主机</a> &amp; <a rel="nofollow" target="_blank" href="http://yusi123.com/go/qiniu">七牛云存储</a>
+        </div>
+        <div class="trackcode pull-right">
+            <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?44932c23fd6a7e829cb31896e6c9c5a7";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* <![CDATA[ */
+var rcGlobal = {
+	serverUrl		:'http://www.wjdiankong.cn',
+	infoTemp		:'%REVIEWER% 在 %POST%',
+	loadingText		:'正在加载',
+	noCommentsText	:'没有任何评论',
+	newestText		:'&laquo; 最新的',
+	newerText		:'&laquo; 上一页',
+	olderText		:'下一页 &raquo;',
+	showContent		:'1',
+	external		:'1',
+	avatarSize		:'32',
+	avatarPosition	:'left',
+	anonymous		:'匿名'
+};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/form.js"></script>
+<script type="text/javascript" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/wp-recentcomments.js"></script>
+<script type="text/javascript" src="./Android解析编译之后的所有文件(so,dex,xml,arsc)格式 _ 尼古拉斯.赵四_files/wp-embed.min.js"></script>
+<script>with(document)0[(getElementsByTagName("head")[0]||body).appendChild(createElement("script")).src="http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion="+~(-new Date()/36e5)];</script>
+<div class="rollto" style="display: block;"><button class="btn btn-inverse" data-type="totop" title="回顶部"><i class="fa fa-arrow-up"></i></button><button class="btn btn-inverse" data-type="torespond" title="发评论"><i class="fa fa-comment-o"></i></button></div></body></html>

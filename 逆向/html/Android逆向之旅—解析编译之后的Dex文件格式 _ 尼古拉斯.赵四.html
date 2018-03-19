@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<!-- saved from url=(0172)http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=10,IE=9,IE=8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/favicon.ico" type="image/x-icon">
+<title>Android逆向之旅—解析编译之后的Dex文件格式 | 尼古拉斯.赵四</title>
+<script src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/hm.js"></script><script>
+window._deel = {name: '尼古拉斯.赵四',url: 'http://www.wjdiankong.cn/wp-content/themes/yusi1.0', ajaxpager: 'on', commenton: 1, roll: [,]}
+</script>
+
+<!-- All in One SEO Pack 2.3.4.2 by Michael Torbert of Semper Fi Web Design[305,402] -->
+<meta name="description" itemprop="description" content="一、前言 新的一年又开始了，大家是否还记得去年年末的时候，我们还有一件事没有做，那就是解析Android中编译之后的classes.dex文件格式，我们在去年的时候已经介绍了： 如何解析编译之后的xml文件格式： 点击进入 如何解析编译之后的resource.arsc文件格式： 点击进入">
+
+<link rel="canonical" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<!-- /all in one seo pack -->
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/www.wjdiankong.cn\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.5.1"}};
+			!function(a,b,c){function d(a){var c,d,e,f=b.createElement("canvas"),g=f.getContext&&f.getContext("2d"),h=String.fromCharCode;if(!g||!g.fillText)return!1;switch(g.textBaseline="top",g.font="600 32px Arial",a){case"flag":return g.fillText(h(55356,56806,55356,56826),0,0),f.toDataURL().length>3e3;case"diversity":return g.fillText(h(55356,57221),0,0),c=g.getImageData(16,16,1,1).data,d=c[0]+","+c[1]+","+c[2]+","+c[3],g.fillText(h(55356,57221,55356,57343),0,0),c=g.getImageData(16,16,1,1).data,e=c[0]+","+c[1]+","+c[2]+","+c[3],d!==e;case"simple":return g.fillText(h(55357,56835),0,0),0!==g.getImageData(16,16,1,1).data[0];case"unicode8":return g.fillText(h(55356,57135),0,0),0!==g.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel="stylesheet" id="wp-recentcomments-css" href="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/wp-recentcomments.css" type="text/css" media="screen">
+<link rel="stylesheet" id="style-css" href="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/style.css" type="text/css" media="all">
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/jquery.min.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/jquery.js"></script>
+<link rel="https://api.w.org/" href="http://www.wjdiankong.cn/wp-json/">
+<link rel="prev" title="Android逆向之旅—解析编译之后的Resource.arsc文件格式" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">
+<link rel="next" title="Android解析编译之后的所有文件(so,dex,xml,arsc)格式" href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/">
+<link rel="shortlink" href="http://www.wjdiankong.cn/?p=579">
+<link rel="alternate" type="application/json+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e9%2580%2586%25e5%2590%2591%25e4%25b9%258b%25e6%2597%2585-%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584dex%25e6%2596%2587%25e4%25bb%25b6%25e6%25a0%25bc%25e5%25bc%258f%2F">
+<link rel="alternate" type="text/xml+oembed" href="http://www.wjdiankong.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.wjdiankong.cn%2Fandroid%25e9%2580%2586%25e5%2590%2591%25e4%25b9%258b%25e6%2597%2585-%25e8%25a7%25a3%25e6%259e%2590%25e7%25bc%2596%25e8%25af%2591%25e4%25b9%258b%25e5%2590%258e%25e7%259a%2584dex%25e6%2596%2587%25e4%25bb%25b6%25e6%25a0%25bc%25e5%25bc%258f%2F&amp;format=xml">
+<meta name="keywords" content="Android技术篇, 安全和逆向">
+<meta name="description" content="一、前言 新的一年又开始了，大家是否还记得去年年末的时候，我们还有一件事没有做，那就是解析Android中编译之后的classes.dex文件格式，我们在去年的时候已经介绍了：  如何解析编译之后的xml文件格式：  点击进入   如何解析编译之后的resource.arsc文件格式：  点击进入   那么我们还剩下一个文件格式就是classes.dex了，那么今天我们就来看看最后一个文件格式解析，关于Android中的dex文件的相关">
+<!--[if lt IE 9]><script src="http://www.wjdiankong.cn/wp-content/themes/yusi1.0/js/html5.js"></script><![endif]-->
+<script src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/share.js"></script><link href="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/share.css" rel="styleSheet" type="text/css"></head>
+<body class="single single-post postid-579 single-format-standard">
+
+<header id="header" class="header">
+<div class="container-inner">
+ <div class="yusi-logo">
+                    <a href="http://www.wjdiankong.cn/">
+                        <h1>
+                                                        <span class="yusi-mono">尼古拉斯.赵四</span>
+                                                        <span class="yusi-bloger">生死看淡，不服就干！</span>
+                                                    </h1>
+                    </a>
+    </div>
+</div>
+
+	<div id="nav-header" class="navbar fixed">
+		
+		<ul class="nav">
+			<li id="menu-item-636" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-636"><a href="http://www.wjdiankong.cn/">首页</a></li>
+<li id="menu-item-637" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-637"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a></li>
+<li id="menu-item-904" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-904"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a></li>
+<li id="menu-item-642" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-642"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a></li>
+<li id="menu-item-638" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-638"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a></li>
+<li id="menu-item-639" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-639"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a></li>
+<li id="menu-item-640" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-640"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a></li>
+<li id="menu-item-641" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-641"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a></li>
+<li id="menu-item-841" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-841"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a></li>
+<li id="menu-item-949" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-949"><a href="http://www.wjdiankong.cn/category/python/">Python</a></li>
+<li style="float:right;">
+                    <div class="toggle-search"><i class="fa fa-search"></i></div>
+<div class="search-expand" style="display: none;"><div class="search-expand-inner"><form method="get" class="searchform themeform" onsubmit="location.href=&#39;http://www.wjdiankong.cn/search/&#39; + encodeURIComponent(this.s.value).replace(/%20/g, &#39;+&#39;); return false;" action="http://www.wjdiankong.cn/"><div> <input type="ext" class="search" name="s" onblur="if(this.value==&#39;&#39;)this.value=&#39;search...&#39;;" onfocus="if(this.value==&#39;search...&#39;)this.value=&#39;&#39;;" value="search..."></div></form></div></div>
+</li>
+		</ul><div class="screen-mini"><button data-type="screen-nav" class="btn btn-inverse screen-nav"><i class="fa fa-list"></i></button></div>
+	</div>
+	
+</header>
+<section class="container"><div class="speedbar">
+					<div class="pull-right">
+				<i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/wp-login.php">登录</a>			</div>
+				<div class="toptip"><strong class="text-success"><i class="fa fa-volume-up"></i> </strong> 关注微信公众号：“<font color="#FF666A"><b>编码美丽</b></font>”技术干货实时推荐，欢迎访问我的github：<a href="https://github.com/fourbrother">点击进入</a></div>
+	</div>
+	<div class="content-wrap">
+	<div class="content">
+
+				<header class="article-header">
+			<h1 class="article-title"><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/">Android逆向之旅—解析编译之后的Dex文件格式</a></h1>
+			<div class="meta">
+				<span id="mute-category" class="muted"><i class="fa fa-list-alt"></i><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/"> Android技术篇</a></span>				<span class="muted"><i class="fa fa-user"></i> <a href="http://www.wjdiankong.cn/author/jiangwei212/">尼古拉斯.赵四</a></span>
+				<time class="muted"><i class="fa fa-clock-o"></i> 2年前 (2016-05-12)</time>
+				<span class="muted"><i class="fa fa-eye"></i> 11494℃</span>
+				<span class="muted"><i class="fa fa-comments-o"></i> <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#respond">0评论</a></span>							</div>
+		</header>
+		<article class="article-content">
+			<h1><span class="Apple-style-span">一、前言</span></h1>
+<p><span class="Apple-style-span">新的一年又开始了，大家是否还记得去年年末的时候，我们还有一件事没有做，那就是解析Android中编译之后的classes.dex文件格式，我们在去年的时候已经介绍了：</span></p>
+<p><span class="Apple-style-span">如何解析编译之后的xml文件格式：</span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84androidmanifest%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title=""><span class="Apple-style-span">点击进入 </span></a></p>
+<p><span class="Apple-style-span">如何解析编译之后的resource.arsc文件格式：</span></p>
+<p><a href="http://www.wjdiankong.cn/android%E9%80%86%E5%90%91%E4%B9%8B%E6%97%85-%E8%A7%A3%E6%9E%90%E7%BC%96%E8%AF%91%E4%B9%8B%E5%90%8E%E7%9A%84resource-arsc%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" data-original-title="" title=""><span class="Apple-style-span">点击进入 </span></a></p>
+<p><span class="Apple-style-span">那么我们还剩下一个文件格式就是classes.dex了，那么今天我们就来看看最后一个文件格式解析，关于Android中的dex文件的相关知识这里就不做太多的解释了，网上有很多资料可以参考，而且，我们在之前介绍的一篇加固apk的那篇文章中也介绍了一点dex的格式知识点：<a href="http://www.wjdiankong.cn/android%E4%B8%AD%E7%9A%84apk%E7%9A%84%E5%8A%A0%E5%9B%BA%E5%8A%A0%E5%A3%B3%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%E5%92%8C%E5%AE%9E%E7%8E%B0/" data-original-title="" title="">点击进入</a>，我们按照之前的解析思路来，首先还是来一张神图：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215152236880" alt="" width="625" height="500"><br>
+</span></p>
+<p><span class="Apple-style-span">有了这张神图，那么接下来我们就可以来介绍dex的文件结构了，首先还是来看一张大体的结构图：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215153108181" alt="" width="400" height="409"><br>
+</span></p>
+<h1><span class="Apple-style-span">二、准备工作</span></h1>
+<p><span class="Apple-style-span">我们在讲解数据结构之前，我们需要先创建一个简单的例子来帮助我们来解析，我们需要得到一个简单的dex文件，这里我们不借助任何的IDE工具，就可以构造一个dex文件出来。借助的工具很简单：javac,dx命令即可。</span></p>
+<p><span class="Apple-style-span">创建 java 源文件 ，内容如下<br>
+代码:<br>
+<span class="Apple-style-span">public class Hello<br>
+{<br>
+public static void main(String[] argc)<br>
+{<br>
+System.out.println(“Hello, Android!\n”);<br>
+}<br>
+}</span><br>
+在当前工作路径下 ， 编译方法如下 ：<br>
+(1) 编译成 java class 文件<br>
+执行命令 ： javac Hello.java<br>
+编译完成后 ，目录下生成 Hello.class 文件 。可以使用命令 java Hello 来测试下 ，会输出代码中的 “Hello， Android！” 的字符串 。<br>
+(2) 编译成 dex 文件<br>
+编译工具在 Android SDK 的路径如下 ，其中 19.0.1 是Android SDK build_tools 的版本 ，请按照在本地安装的 build_tools 版本来 。建议该路径加载到 PATH 路径下 ，否则引用 dx 工具时需要使用绝对路径 ：<span class="Apple-style-span">./build-tools/19.0.1/dx</span><br>
+执行命令 ：&nbsp;<span class="Apple-style-span">dx –dex –output=Hello.dex Hello.class</span><br>
+编译正常会生成 Hello.dex 文件 。<br>
+3. 使用 ADB 运行测试<br>
+测试命令和输出结果如下 ：<br>
+<span class="Apple-style-span">$ adb root<br>
+$ adb push Hello.dex /sdcard/<br>
+$ adb shell<br>
+root@maguro:/ # dalvikvm -cp /sdcard/Hello.dex Hello<br>
+Hello, Android!</span><br>
+4. 重要说明<br>
+(1) 测试环境使用真机和 Android 虚拟机都可以的 。核心的命令是<br>
+<span class="Apple-style-span">dalvikvm -cp /sdcard/Hello.dex Hello</span><br>
+-cp 是 class path 的缩写 ，后面的 Hello 是要运行的 Class 的名称 。网上有描述说输入 dalvikvm –help<br>
+可以看到 dalvikvm 的帮助文档 ，但是在 Android4.4 的官方模拟器和自己的手机上测试都提示找不到<br>
+Class 路径 ，在Android 老的版本 （ 4.3 ) 上测试还是有输出的 。<br>
+(2) 因为命令在执行时 ， dalvikvm 会在 /data/dalvik-cache/ 目录下创建 .dex 文件 ，因此要求 ADB 的<br>
+执行 Shell 对目录 /data/dalvik-cache/ 有读、写和执行的权限 ，否则无法达到预期效果 。</span></p>
+<h1><span class="Apple-style-span">三、讲解数据结构</span></h1>
+<p><span class="Apple-style-span">下面我们按照这张大体的思路图来一一讲解各个数据结构</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第一、头部信息Header结构</span></span></h2>
+<p><span class="Apple-style-span">dex文件里的header。除了描述.dex文件的文件信息外，还有文件里其它各个区域的索引。header对应成结构体类型，逻辑上的描述我用结构体header_item来理解它。先给出结构体里面用到的数据类型ubyte和uint的解释，然后再是结构体的描述，后面对各种结构描述的时候也是用的这种方法。<br>
+</span></p>
+<p><span class="Apple-style-span">代码定义：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class HeaderType {
+	
+	/**
+	 * struct header_item
+		{
+		ubyte[8] magic;
+		unit checksum;
+		ubyte[20] siganature;
+		uint file_size;
+		uint header_size;
+		unit endian_tag;
+		uint link_size;
+		uint link_off;
+		uint map_off;
+		uint string_ids_size;
+		uint string_ids_off;
+		uint type_ids_size;
+		uint type_ids_off;
+		uint proto_ids_size;
+		uint proto_ids_off;
+		uint method_ids_size;
+		uint method_ids_off;
+		uint class_defs_size;
+		uint class_defs_off;
+		uint data_size;
+		uint data_off;
+		}
+	 */
+	public byte[] magic = new byte[8];
+	public int checksum;
+	public byte[] siganature = new byte[20];
+	public int file_size;
+	public int header_size;
+	public int endian_tag;
+	public int link_size;
+	public int link_off;
+	public int map_off;
+	public int string_ids_size;
+	public int string_ids_off;
+	public int type_ids_size;
+	public int type_ids_off;
+	public int proto_ids_size;
+	public int proto_ids_off;
+	public int field_ids_size;
+	public int field_ids_off;
+	public int method_ids_size;
+	public int method_ids_off;
+	public int class_defs_size;
+	public int class_defs_off;
+	public int data_size;
+	public int data_off;
+	
+	@Override
+	public String toString(){
+		return "magic:"+Utils.bytesToHexString(magic)+"\n"
+				+ "checksum:"+checksum + "\n"
+				+ "siganature:"+Utils.bytesToHexString(siganature) + "\n"
+				+ "file_size:"+file_size + "\n"
+				+ "header_size:"+header_size + "\n"
+				+ "endian_tag:"+endian_tag + "\n"
+				+ "link_size:"+link_size + "\n"
+				+ "link_off:"+Utils.bytesToHexString(Utils.int2Byte(link_off)) + "\n"
+				+ "map_off:"+Utils.bytesToHexString(Utils.int2Byte(map_off)) + "\n"
+				+ "string_ids_size:"+string_ids_size + "\n"
+				+ "string_ids_off:"+Utils.bytesToHexString(Utils.int2Byte(string_ids_off)) + "\n"
+				+ "type_ids_size:"+type_ids_size + "\n"
+				+ "type_ids_off:"+Utils.bytesToHexString(Utils.int2Byte(type_ids_off)) + "\n"
+				+ "proto_ids_size:"+proto_ids_size + "\n"
+				+ "proto_ids_off:"+Utils.bytesToHexString(Utils.int2Byte(proto_ids_off)) + "\n"
+				+ "field_ids_size:"+field_ids_size + "\n"
+				+ "field_ids_off:"+Utils.bytesToHexString(Utils.int2Byte(field_ids_off)) + "\n"
+				+ "method_ids_size:"+method_ids_size + "\n"
+				+ "method_ids_off:"+Utils.bytesToHexString(Utils.int2Byte(method_ids_off)) + "\n"
+				+ "class_defs_size:"+class_defs_size + "\n"
+				+ "class_defs_off:"+Utils.bytesToHexString(Utils.int2Byte(class_defs_off)) + "\n"
+				+ "data_size:"+data_size + "\n"
+				+ "data_off:"+Utils.bytesToHexString(Utils.int2Byte(data_off));
+				
+				
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">查看Hex如下：</span></p>
+<p><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215164902618" alt=""></p>
+<p><span class="Apple-style-span">我们用一张图来描述各个字段的长度：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215153517196" alt="" width="432" height="389"></span><br>
+<span class="Apple-style-span">里面一对一对以_size和_off为后缀的描述：data_size是以Byte为单位描述data区的大小，其余的<br>
+_size都是描述该区里元素的个数；_off描述相对与文件起始位置的偏移量。其余的6个是描述.dex文件信<br>
+息的，各项说明如下：<br>
+<span class="Apple-style-span">(1) magic value</span><br>
+这 8 个 字节一般是常量 ，为了使 .dex 文件能够被识别出来 ，它必须出现在 .dex 文件的最开头的<br>
+位置 。数组的值可以转换为一个字符串如下 ：<br>
+{ 0x64 0x65 0x78 0x0a 0x30 0x33 0x35 0x00 }&nbsp;= “dex\n035\0”<br>
+中间是一个 ‘\n’ 符号 ，后面 035 是 Dex 文件格式的版本 。<br>
+<span class="Apple-style-span">(2) checksum 和 signature</span><br>
+文件校验码 ，使用alder32 算法校验文件除去 maigc ，checksum 外余下的所有文件区域 ，用于检<br>
+查文件错误 。<br>
+signature , 使用 SHA-1 算法 hash 除去 magic ,checksum 和 signature 外余下的所有文件区域 ，<br>
+用于唯一识别本文件 。<br>
+<span class="Apple-style-span">(3) file_size</span><br>
+Dex 文件的大小 。<br>
+<span class="Apple-style-span">(4) header_size</span><br>
+header 区域的大小 ，单位 Byte ，一般固定为 0x70 常量 。<br>
+<span class="Apple-style-span">(5) endian_tag</span><br>
+大小端标签 ，标准 .dex 文件格式为 小端 ，此项一般固定为 0x1234 5678 常量 。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(6) link_size和link_off</span></span></p>
+<p><span class="Apple-style-span">这个两个字段是表示链接数据的大小和偏移值</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(7) map_off</span><br>
+map item 的偏移地址 ，该 item 属于 data 区里的内容 ，值要大于等于 data_off 的大小 。结构如<br>
+map_list 描述 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MapList {
+	
+	/**
+	 * struct maplist
+		{
+		uint size;
+		map_item list [size];
+		}
+	 */
+	
+	public int size;
+	public List&lt;MapItem&gt; map_item = new ArrayList&lt;MapItem&gt;();
+
+}
+</pre>
+<p><span class="Apple-style-span">定义位置 ： data区<br>
+引用位置 ：header 区 。<br>
+map_list 里先用一个 uint 描述后面有 size 个 map_item , 后续就是对应的 size 个 map_item 描述 。<br>
+map_item 结构有 4 个元素 ： type 表示该 map_item 的类型 ，本节能用到的描述如下 ，详细Dalvik<br>
+Executable Format 里 Type Code 的定义 ；size 表示再细分此 item ， 该类型的个数 ；offset 是第一个元<br>
+素的针对文件初始位置的偏移量 ； unuse 是用对齐字节的 ，无实际用处 。结构定义如下：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+public class MapItem {
+	
+	/**
+	 * struct map_item
+		{
+		ushort type;
+		ushort unuse;
+		uint size;
+		uint offset;
+		}
+	 */
+	
+	public short type;
+	public short unuse;
+	public int size;
+	public int offset;
+	
+	public static int getSize(){
+		return 2 + 2 + 4 + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "type:"+type+",unuse:"+unuse+",size:"+size+",offset:"+offset;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">header-&gt;map_off = 0x0244 , 偏移为 0244 的位置值为 0x 000d 。</span></p>
+<p><span class="Apple-style-span">每个 map_item 描述占用 12 Byte ， 整个 map_list 占用 12 * size + 4 个字节 。所以整个 map_list 占用空<br>
+间为 12 * 13 + 4 = 160 = 0x00a0 ， 占用空间为 0x 0244 ~ 0x 02E3 。从文件内容上看 ，也是从 0x 0244<br>
+到文件结束的位置 。</span><br>
+<span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165051152" alt=""></span><br>
+<span class="Apple-style-span">地址 0x0244 的一个 uinit 的值为 0x0000 000d ，map_list – &gt; size = 0x0d = 13 ，说明后续有 13 个<br>
+map_item 。根据 map_item 的结构描述在0x0248 ~ 0x02e3 里的值 ，整理出这段二进制所表示的 13 个<br>
+map_item 内容 ，汇成表格如下 ：<br>
+map_list – &gt; map_item 里的内容 ，有部分 item 跟 header 里面相应 item 的 offset 地址描述相同 。但<br>
+map_list 描述的更为全面些 ，又包括了 HEADER_ITEM , TYPE_LIST , STRING_DATA_ITEM 等 ，<br>
+最后还有它自己 TYPE_MAP_LIST 。<br>
+至此 ， header 部分描述完毕 ，它包括描述 .dex 文件的信息 ，其余各索引区和 data 区的偏移信息 ， 一个<br>
+map_list 结构 。map_list 里除了对索引区和数据区的偏移地址又一次描述 ，也有其它诸如 HEAD_ITEM ,<br>
+DEBUG_INFO_ITEM 等信息 。<br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(8) string_ids_size和string_ids_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中用到的所有的字符串内容的大小和偏移值，我们需要解析完这部分，然后用一个字符串池存起来，后面有其他的数据结构会用索引值来访问字符串，这个池子也是非常重要的。后面会详细介绍string_ids的数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(9) type_ids_size和type_ids_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中的类型数据结构的大小和偏移值，比如类类型，基本类型等信息，后面会详细介绍type_ids的数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(10) proto_ids_size和type_ids_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中的元数据信息数据结构的大小和偏移值，描述方法的元数据信息，比如方法的返回类型，参数类型等信息，后面会详细介绍proto_ids的数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(11) field_ids_size和field_ids_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中的字段信息数据结构的大小和偏移值，后面会详细介绍field_ids的数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(12) method_ids_size和method_ids_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中的方法信息数据结构的大小和偏移值，后面会详细介绍method_ids的数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(13) class_defs_size和class_defs_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中的类信息数据结构的大小和偏移值，这个数据结构是整个dex中最复杂的数据结构，他内部层次很深，包含了很多其他的数据结构，所以解析起来也很麻烦，所以后面会着重讲解这个数据结构</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(14) data_size和data_off</span></span></p>
+<p><span class="Apple-style-span">这两个字段表示dex中数据区域的结构信息的大小和偏移值，这个结构中存放的是数据区域，比如我们定义的常量值等信息。</span></p>
+<p><span class="Apple-style-span">到这里我们就看完了dex的头部信息，头部包含的信息还是很多的，主要就两个个部分：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">1) 魔数+签名+文件大小等信息</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">2) 后面的各个数据结构的大小和偏移值，都是成对出现的</span></span></p>
+<p><span class="Apple-style-span">下面我们就来开始介绍各个数据结构的信息</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第二、string_ids数据结构</span></span></h2>
+<p><span class="Apple-style-span">string_ids 区索引了 .dex 文件所有的字符串 。 本区里的元素格式为 string_ids_item , 可以使用结<br>
+构体如下描述 。</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class StringIdsItem {
+	
+	/**
+	 * struct string_ids_item
+		{
+		uint string_data_off;
+		}
+	 */
+	
+	public int string_data_off;
+	
+	public static int getSize(){
+		return 4;
+	}
+	
+	@Override
+	public String toString(){
+		return Utils.bytesToHexString(Utils.int2Byte(string_data_off));
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">以 _ids 结尾的各个 section 里放置的都是对应数据的偏移地址 ，只是一个索引 ，所以才会在 dex文件布局里把这些区归类为 “索引区” 。<br>
+string_data_off 只是一个偏移地址 ，它指向的数据结构为 string_data_item</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class StringDataItem {
+	
+	/**
+	 * struct string_data_item
+		{
+		uleb128 utf16_size;
+		ubyte data;
+		}
+	 */
+	
+	/**
+	 *  上述描述里提到了 LEB128 （ little endian base 128 ) 格式 ，是基于 1 个 Byte 的一种不定长度的
+		编码方式 。若第一个 Byte 的最高位为 1 ，则表示还需要下一个 Byte 来描述 ，直至最后一个 Byte 的最高
+		位为 0 。每个 Byte 的其余 Bit 用来表示数据
+	 */
+	
+	public List&lt;Byte&gt; utf16_size = new ArrayList&lt;Byte&gt;();
+	public byte data;
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">延展</span></span></span></p>
+<p><span class="Apple-style-span">上述描述里提到了 LEB128 （ little endian base 128 ) 格式 ，是基于 1 个 Byte 的一种不定长度的编码方式 。若第一个 Byte 的最高位为 1 ，则表示还需要下一个 Byte 来描述 ，直至最后一个 Byte 的最高位为 0 。每个 Byte 的其余 Bit 用来表示数据 。这里既然介绍了uleb128这种数据类型，就在这里解释一下，因为后面会经常用到这个数据类型，这个数据类型的出现其实就是为了解决一个问题，那就是减少内存的浪费，他就是表示int类型的数值，但是int类型四个字节有时候在使用的时候有点浪费，所以就应运而生了，他的原理也很简单：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215160400482" alt=""></span><br>
+<span class="Apple-style-span">图只是指示性的用两个字节表示。编码的每个字节有效部分只有低7bits，每个字节的最高bit用来指示是否是最后一个字节。<br>
+非最高字节的bit7为0<br>
+最高字节的bit7为1<br>
+将leb128编码的数字转换为可读数字的规则是：除去每个字节的bit7，将每个字节剩余的7个bits拼接在一起，即为数字。<br>
+比如：<br>
+LEB128编码的0x02b0 —&gt; 转换后的数字0x0130<br>
+转换过程：<br>
+0x02b0 =&gt; 0000 0010 1011 0000 =&gt;去除最高位=&gt; 000 0010 011 0000 =&gt;按4bits重排 =&gt; 00 0001 0011 0000 =&gt; 0x130</span></p>
+<p><span class="Apple-style-span">底层代码位于：<span class="Apple-style-span">android/dalvik/libdex/leb128.h</span></span></p>
+<p><span class="Apple-style-span">Java中也写了一个工具类：</span></p>
+<pre class="java">/**
+ * 读取C语言中的uleb类型
+ * 目的是解决整型数值浪费问题
+ * 长度不固定，在1~5个字节中浮动
+ * @param srcByte
+ * @param offset
+ * @return
+ */
+public static byte[] readUnsignedLeb128(byte[] srcByte, int offset){
+	List&lt;Byte&gt; byteAryList = new ArrayList&lt;Byte&gt;();
+	byte bytes = Utils.copyByte(srcByte, offset, 1)[0];
+	byte highBit = (byte)(bytes &amp; 0x80);
+	byteAryList.add(bytes);
+	offset ++;
+	while(highBit != 0){
+		bytes = Utils.copyByte(srcByte, offset, 1)[0];
+		highBit = (byte)(bytes &amp; 0x80);
+		offset ++;
+		byteAryList.add(bytes);
+	}
+	byte[] byteAry = new byte[byteAryList.size()];
+	for(int j=0;j&lt;byteAryList.size();j++){
+		byteAry[j] = byteAryList.get(j);
+	}
+	return byteAry;
+}</pre>
+<p><span class="Apple-style-span">这个方法是读取dex中uleb128类型的数据，遇到一个字节最高位=0就停止读下个字节的原理来实现即可</span></p>
+<p><span class="Apple-style-span">还有一个方法就是解码uleb128类型的数据：</span></p>
+<pre class="java">/**
+ * 解码leb128数据
+ * 每个字节去除最高位，然后进行拼接，重新构造一个int类型数值，从低位开始
+ * @param byteAry
+ * @return
+ */
+public static int decodeUleb128(byte[] byteAry) {
+	int index = 0, cur;
+	int result = byteAry[index];
+	index++;
+
+	if(byteAry.length == 1){
+		return result;
+	}
+
+	if(byteAry.length == 2){
+		cur = byteAry[index];
+		index++;
+		result = (result &amp; 0x7f) | ((cur &amp; 0x7f) &lt;&lt; 7);
+		return result;
+	}
+
+	if(byteAry.length == 3){
+		cur = byteAry[index];
+		index++;
+		result |= (cur &amp; 0x7f) &lt;&lt; 14;
+		return result;
+	}
+
+	if(byteAry.length == 4){
+		cur = byteAry[index];
+		index++;
+		result |= (cur &amp; 0x7f) &lt;&lt; 21;
+		return result;
+	}
+
+	if(byteAry.length == 5){
+		cur = byteAry[index];
+		index++;
+		result |= cur &lt;&lt; 28;
+		return result;
+	}
+
+	return result;
+
+}</pre>
+<p><span class="Apple-style-span">这个原理很简单，就是去除每个字节的最高位，然后拼接剩下的7位，然后从新构造一个int类型的数据，位不够就从低位开始左移。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">我们通过上面的uleb128的解释来看，其实uleb128类型就是1~5个字节来回浮动，为什么是5呢？因为他要表示一个4个字节的int类型，但是每个字节要去除最高位，那么肯定最多只需要5个字节就可以表示4个字节的int类型数据了。这里就解释了uleb128数据类型，下面我们回归正题，继续来看string_ids数据结构</span></span></p>
+<p><span class="Apple-style-span">根据 string_ids_item 和 string_data_item 的描述 ，加上 header 里提供的入口位置 string_ids_size<br>
+= 0x0e , string_ids_off = 0x70 ，我们可以整理出 string_ids 及其对应的数据如下 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165154341" alt=""></span></p>
+<p>&nbsp;</p>
+<p><span class="Apple-style-span">string_ids_item 和 string_data_item 里提取出的对应数据表格 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215161321291" alt=""></span><br>
+<span class="Apple-style-span">string 里的各种标志符号 ，诸如 L ， V ， VL , [ 等在 .dex 文件里有特殊的意思 。<br>
+string_ids 的终极奥义就是找到这些字符串 。其实使用二进制编辑器打开 .dex 文件时 ，一般工具默认翻译成 ASCII 码 ，总会一大片熟悉的字符白生生地很是亲切， 也很是晃眼 。刚才走过的一路子分析流程 ，就是顺藤摸瓜找到它们是怎么来的。以后的一些 type-ids , method_ids 也会引用到这一片熟悉的字符串。<br>
+</span></p>
+<p><span class="Apple-style-span">注意：我们后面的解析代码会看到，其实我们没必要用那么复杂的去解析uleb128类型，因为我们会看到这个字符串和我们之前解析xml和resource.arsc格式一样，每个字符串的第一个字节表示字符串的长度，那么我们只要知道每个字符串的偏移地址就可以解析出字符串的内容了，而每个字符串的偏移地址是存放在string_ids_item中的。</span></p>
+<p><span class="Apple-style-span">到这里我们就解析完了dex中所有的字符串内容，我们用一个字符串池来进行存储即可。下面我们来继续看type_ids数据结构</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第三、type_ids数据结构</span></span></h2>
+<p><span class="Apple-style-span">这个数据结构中存放的数据主要是描述dex中所有的类型，比如类类型，基本类型等信息。type_ids 区索引了 dex 文件里的所有数据类型 ，包括 class 类型 ，数组类型（array types）和基本类型(primitive types) 。 本区域里的元素格式为 type_ids_item , 结构描述如下 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class TypeIdsItem {
+	
+	/**
+	 * struct type_ids_item
+		{
+		uint descriptor_idx;
+		}
+	 */
+	
+	public int descriptor_idx;
+	
+	public static int getSize(){
+		return 4;
+	}
+	
+	@Override
+	public String toString(){
+		return Utils.bytesToHexString(Utils.int2Byte(descriptor_idx));
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">type_ids_item 里面 descriptor_idx 的值的意思 ，是 string_ids 里的 index 序号 ，是用来描述此type 的字符串 。</span></p>
+<p><span class="Apple-style-span">根据 header 里 type_ids_size = 0x07 , type_ids_off = 0xa8 , 找到对应的二进制描述区 。00000a0: 1a02</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165456512" alt=""></span><br>
+<span class="Apple-style-span">根据 type_id_item 的描述 ，整理出表格如下 。因为 type_id_item – &gt; descriptor_idx 里存放的是指向 string_ids 的 index 号 ，所以我们也能得到该 type 的字符串描述 。这里出现了 3 个 type descriptor :<br>
+L 表示 class 的详细描述 ，一般以分号表示 class 描述结束 ；<br>
+V 表示 void 返回类型 ，只有在返回值的时候有效 ；<br>
+[ 表示数组 ，[Ljava/lang/String; 可以对应到 java 语言里的 java.lang.String[] 类型 。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215162436057" alt=""><br>
+</span></span></p>
+<p><span class="Apple-style-span">我们后面的其他数据结构也会使用到type_ids类型，所以我们这里解析完type_ids也是需要用一个池子来存放的，后面直接用索引index来访问即可。</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">第四、proto_ids数据结构</span></span></h2>
+<p><span class="Apple-style-span">proto 的意思是 method prototype 代表 java 语言里的一个 method 的原型 。proto_ids 里的元素为 proto_id_item , 结构如下 。</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProtoIdsItem {
+	
+	/**
+	 * struct proto_id_item
+		{
+		uint shorty_idx;
+		uint return_type_idx;
+		uint parameters_off;
+		}
+	 */
+	
+	public int shorty_idx;
+	public int return_type_idx;
+	public int parameters_off;
+	
+	//这个不是公共字段，而是为了存储方法原型中的参数类型名和参数个数
+	public List&lt;String&gt; parametersList = new ArrayList&lt;String&gt;();
+	public int parameterCount;
+	
+	public static int getSize(){
+		return 4 + 4 + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "shorty_idx:"+shorty_idx+",return_type_idx:"+return_type_idx+",parameters_off:"+parameters_off;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">shorty_idx ：</span>跟 type_ids 一样 ，它的值是一个 string_ids 的 index 号 ，最终是一个简短的字符串描述 ，用来说明该 method 原型<br>
+<span class="Apple-style-span">return_type_idx ：</span>它的值是一个 type_ids 的 index 号 ，表示该 method 原型的返回值类型 。<br>
+<span class="Apple-style-span">parameters_off ：</span>后缀 off 是 offset , 指向 method 原型的参数列表 type_list ; 若 method 没有参数 ，值为0 。参数列表的格式是 type_list ，结构从逻辑上如下描述 。size 表示参数的个数 ；type_idx 是对应参数的类型 ，它的值是一个 type_ids 的 index 号 ，跟 return_type_idx 是同一个品种的东西 。</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class TypeList {
+	
+	/**
+	 * struct type_list
+		{
+		uint size;
+		ushort type_idx[size];
+		}
+	 */
+	
+	public int size;//参数的个数
+	public List&lt;Short&gt; type_idx = new ArrayList&lt;Short&gt;();//参数的类型
+	
+}
+</pre>
+<p><span class="Apple-style-span">header 里 proto_ids_size = 0x03 , proto_ids_off = 0xc4 , 它的二进制描述区如下 ：</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165608465" alt=""><br>
+</span></span></p>
+<p><span class="Apple-style-span">根据 proto_id_item 和 type_list 的格式 ，对照这它们的二进制部分 ，整理出表格如下 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215162854859" alt=""></span><br>
+<span class="Apple-style-span">可以看出 ，有 3 个 method 原型 ，返回值都为 void ，index = 0 的没有参数传入 ，index = 1 的传入一个<br>
+String 参数 ，index=2 的传入一个 String[] 类型的参数 。<br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span>我们在这里会看到很多idx结尾的字段，这个一般都是索引值，所以我们要注意的是，区分这个索引值到底是对应的哪张表格，是字符串池，还是类型池等信息，这个如果弄混淆的话，那么解析就会出现混乱了。这个后面其他数据结构都是需要注意的。</span></p>
+<h2><span class="Apple-style-span">第五、field_ids数据结构</span></h2>
+<p><span class="Apple-style-span">filed_ids 区里面存放的是dex 文件引用的所有的 field 。本区的元素格式是 field_id_item ，逻辑结构描述如</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+public class FieldIdsItem {
+	
+	/**
+	 * struct filed_id_item
+		{
+		ushort class_idx;
+		ushort type_idx;
+		uint name_idx;
+		}
+	 */
+	
+	public short class_idx;
+	public short type_idx;
+	public int name_idx;
+	
+	public static int getSize(){
+		return 2 + 2 + 4;
+	}
+
+	@Override
+	public String toString(){
+		return "class_idx:"+class_idx+",type_idx:"+type_idx+",name_idx:"+name_idx;
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">class_idx ：</span>表示本 field 所属的 class 类型 , class_idx 的值是 type_ids 的一个 index ， 并且必须指向一个class 类型 。<br>
+<span class="Apple-style-span">type_idx ：</span>表示本 field 的类型 ，它的值也是 type_ids 的一个 index 。<br>
+<span class="Apple-style-span">name_idx ：</span> 表示本 field 的名称 ，它的值是 string_ids 的一个 index 。</span></p>
+<p><span class="Apple-style-span">header 里 field_ids_size = 1 , field_ids_off = 0xe8 。说明本 .dex 只有一个 field ，这部分的二进制描述如下 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165658926" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span>这里的字段都是索引值，一定要区分是哪个池子的索引值，还有就是，这个数据结构我们后面也要使用到，所以需要用一个池子来存储。</span></p>
+<h2><span class="Apple-style-span">第六、 method_ids数据结构</span></h2>
+<p><span class="Apple-style-span">method_ids 是索引区的最后一个条目 ，它索引了 dex 文件里的所有的 method.<br>
+method_ids 的元素格式是 method_id_item ， 结构跟 fields_ids 很相似：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+public class MethodIdsItem {
+	
+	/**
+	 * struct filed_id_item
+		{
+		ushort class_idx;
+		ushort proto_idx;
+		uint name_idx;
+		}
+	 */
+	
+	public short class_idx;
+	public short proto_idx;
+	public int name_idx;
+	
+	public static int getSize(){
+		return 2 + 2 + 4;
+	}
+	
+	@Override
+	public String toString(){
+		return "class_idx:"+class_idx+",proto_idx:"+proto_idx+",name_idx:"+name_idx;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">class_idx ：</span>表示本 method 所属的 class 类型 , class_idx 的值是 type_ids 的一个 index ， 并且必须指向一个 class 类型 。<br>
+<span class="Apple-style-span">name_idx ：</span>表示本 method 的名称 ，它的值是 string_ids 的一个 index 。<br>
+<span class="Apple-style-span">proto_idx ：</span>描述该 method 的原型 ，指向 proto_ids 的一个 index 。<br>
+header 里 method_ids_size = 0x04 , method_ids_off = 0xf0 。本部分的二进制描述如下 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215165837341" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">对 dex 反汇编的时候 ，常用的 method 表示方法是这种形式 :<br>
+<span class="Apple-style-span">Lpackage/name/ObjectName;-&gt;MethodName(III)Z</span><br>
+将上述表格里的字符串再次整理下 ，method 的描述分别为 ：<br>
+0：Lhello; -&gt; &lt;init&gt;()V<br>
+1：LHello; -&gt; main([Ljava/lang/String;)V<br>
+2：Ljava/io/PrintStream; -&gt; println(Ljava/lang/String;)V<br>
+3： Ljava/lang/Object; -&gt; &lt;init&gt;()V<br>
+至此 ，索引区的内容描述完毕 ，包括 string_ids , type_ids，proto_ids , field_ids , method_ids 。每个索引区域里存放着指向具体数据的偏移地址 （如 string_ids ) ， 或者存放的数据是其它索引区域里面的 index 号。<br>
+</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span>这里的字段都是索引值，一定要区分是哪个池子的索引值，还有就是，这个数据结构我们后面也要使用到，所以需要用一个池子来存储。<br>
+</span></p>
+<h2><span class="Apple-style-span">第八、class_defs数据结构</span></h2>
+<p><span class="Apple-style-span">上面我们介绍了所有的索引区域，终于到了最后一个数据结构了，但是我们现在还不能开心，因为这个数据结构是最复杂的，所以解析下来还是很费劲的。因为他的层次太深了。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">1、class_def_item</span><br>
+从字面意思解释 ，class_defs 区域里存放着 class definitions , class 的定义 。它的结构较 dex 区都要复杂些 ,因为有些数据都直接指向了data 区里面 。<br>
+class_defs 的数据格式为 class_def_item ， 结构描述如下 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+public class ClassDefItem {
+	
+	/**
+	 * struct class_def_item
+		{
+		uint class_idx;
+		uint access_flags;
+		uint superclass_idx;
+		uint interfaces_off;
+		uint source_file_idx;
+		uint annotations_off;
+		uint class_data_off;
+		uint static_value_off;
+		}
+	 */
+	
+	public int class_idx;
+	public int access_flags;
+	public int superclass_idx;
+	public int iterfaces_off;
+	public int source_file_idx;
+	public int annotations_off;
+	public int class_data_off;
+	public int static_value_off;
+	
+	public final static int 
+			ACC_PUBLIC       = 0x00000001,       // class, field, method, ic
+			ACC_PRIVATE      = 0x00000002,       // field, method, ic
+			ACC_PROTECTED    = 0x00000004,       // field, method, ic
+			ACC_STATIC       = 0x00000008,       // field, method, ic
+			ACC_FINAL        = 0x00000010,       // class, field, method, ic
+			ACC_SYNCHRONIZED = 0x00000020,       // method (only allowed on natives)
+			ACC_SUPER        = 0x00000020,       // class (not used in Dalvik)
+			ACC_VOLATILE     = 0x00000040,       // field
+			ACC_BRIDGE       = 0x00000040,       // method (1.5)
+			ACC_TRANSIENT    = 0x00000080,       // field
+			ACC_VARARGS      = 0x00000080,       // method (1.5)
+			ACC_NATIVE       = 0x00000100,       // method
+			ACC_INTERFACE    = 0x00000200,       // class, ic
+			ACC_ABSTRACT     = 0x00000400,       // class, method, ic
+			ACC_STRICT       = 0x00000800,       // method
+			ACC_SYNTHETIC    = 0x00001000,       // field, method, ic
+			ACC_ANNOTATION   = 0x00002000,       // class, ic (1.5)
+			ACC_ENUM         = 0x00004000,       // class, field, ic (1.5)
+			ACC_CONSTRUCTOR  = 0x00010000,       // method (Dalvik only)
+			ACC_DECLARED_SYNCHRONIZED = 0x00020000,       // method (Dalvik only)
+			ACC_CLASS_MASK =
+			(ACC_PUBLIC | ACC_FINAL | ACC_INTERFACE | ACC_ABSTRACT
+					| ACC_SYNTHETIC | ACC_ANNOTATION | ACC_ENUM),
+					ACC_INNER_CLASS_MASK =
+					(ACC_CLASS_MASK | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC),
+					ACC_FIELD_MASK =
+					(ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL
+							| ACC_VOLATILE | ACC_TRANSIENT | ACC_SYNTHETIC | ACC_ENUM),
+							ACC_METHOD_MASK =
+							(ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL
+									| ACC_SYNCHRONIZED | ACC_BRIDGE | ACC_VARARGS | ACC_NATIVE
+									| ACC_ABSTRACT | ACC_STRICT | ACC_SYNTHETIC | ACC_CONSTRUCTOR
+									| ACC_DECLARED_SYNCHRONIZED);
+	
+	public static int getSize(){
+		return 4 * 8;
+	}
+	
+	@Override
+	public String toString(){
+		return "class_idx:"+class_idx+",access_flags:"+access_flags+",superclass_idx:"+superclass_idx+",iterfaces_off:"+iterfaces_off
+				+",source_file_idx:"+source_file_idx+",annotations_off:"+annotations_off+",class_data_off:"+class_data_off
+				+",static_value_off:"+static_value_off;
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(1) class_idx：</span>描述具体的 class 类型 ，值是 type_ids 的一个 index 。值必须是一个 class 类型 ，不能是数组类型或者基本类型 。<br>
+<span class="Apple-style-span">(2) access_flags：</span> 描述 class 的访问类型 ，诸如 public , final , static 等 。在 dex-format.html 里 “access_flagsDefinitions” 有具体的描述 。<br>
+<span class="Apple-style-span">(3) superclass_idx：</span>描述 supperclass 的类型 ，值的形式跟 class_idx 一样 。<br>
+<span class="Apple-style-span">(4) interfaces_off：</span>值为偏移地址 ，指向 class 的 interfaces , 被指向的数据结构为 type_list 。class 若没有interfaces ,值为 0。<br>
+<span class="Apple-style-span">(5) source_file_idx：</span>表示源代码文件的信息 ，值是 string_ids 的一个 index 。若此项信息缺失 ，此项值赋值为NO_INDEX=0xffff ffff<br>
+<span class="Apple-style-span">(6) annotions_off：</span>值是一个偏移地址 ，指向的内容是该 class 的注释 ，位置在 data 区，格式为annotations_direcotry_item 。若没有此项内容 ，值为 0 。<br>
+<span class="Apple-style-span">(7) class_data_off：</span>值是一个偏移地址 ，指向的内容是该 class 的使用到的数据 ，位置在 data 区，格式为class_data_item 。若没有此项内容 ，值为 0 。该结构里有很多内容 ，详细描述该 class 的 field ，method, method 里的执行代码等信息 ，后面有一个比较大的篇幅来讲述 class_data_item 。<br>
+<span class="Apple-style-span">(8) static_value_off：</span>值是一个偏移地址 ，指向 data 区里的一个列表 ( list ) ，格式为 encoded_array_item。若没有此项内容 ，值为 0 。</span></p>
+<p><span class="Apple-style-span">header 里 class_defs_size = 0x01 , class_defs_off = 0x 0110 。则此段二进制描述为 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215170137436" alt=""></span></p>
+<p><span class="Apple-style-span">其实最初被编译的源码只有几行 ，和 class_def_item 的表格对照下 ，一目了然 。<br>
+source file : Hello.java<br>
+public class Hello<br>
+{<br>
+element value associated strinigs<br>
+class_idx 0x00 LHello;<br>
+access_flags 0x01 ACC_PUBLIC<br>
+superclass_idx 0x02 Ljava/lang/Object;<br>
+interface_off 0x00<br>
+source_file_idx 0x02 Hello.java<br>
+annotations_off 0x00<br>
+class_data_off 0x0234<br>
+static_value_off 0x00</span></p>
+<p>public static void main(String[] argc)<br>
+{<br>
+System.out.println(“Hello, Android!\n”);<br>
+}<br>
+}</p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">2、 class_def_item =&gt; class_data_item</span><br>
+class_data_off 指向 data 区里的 class_data_item 结构 ,class_data_item 里存放着本 class 使用到的各种数据 ，下面是 class_data_item 的逻辑结构 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+public class ClassDataItem {
+	
+	/**
+	 *  uleb128 unsigned little-endian base 128
+		struct class_data_item
+		{
+			uleb128 static_fields_size;
+			uleb128 instance_fields_size;
+			uleb128 direct_methods_size;
+			uleb128 virtual_methods_size;
+			encoded_field static_fields [ static_fields_size ];
+			encoded_field instance_fields [ instance_fields_size ];
+			encoded_method direct_methods [ direct_method_size ];
+			encoded_method virtual_methods [ virtual_methods_size ];
+		}
+	 */
+	
+	//uleb128只用来编码32位的整型数
+	public int static_fields_size;
+	public int instance_fields_size;
+	public int direct_methods_size;
+	public int virtual_methods_size;
+	
+	public EncodedField[] static_fields;
+	public EncodedField[] instance_fields;
+	public EncodedMethod[] direct_methods;
+	public EncodedMethod[] virtual_methods;
+	
+	@Override
+	public String toString(){
+		return "static_fields_size:"+static_fields_size+",instance_fields_size:"
+				+instance_fields_size+",direct_methods_size:"+direct_methods_size+",virtual_methods_size:"+virtual_methods_size
+				+"\n"+getFieldsAndMethods();
+	}
+	
+	private String getFieldsAndMethods(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("static_fields:\n");
+		for(int i=0;i&lt;static_fields.length;i++){
+			sb.append(static_fields[i]+"\n");
+		}
+		sb.append("instance_fields:\n");
+		for(int i=0;i&lt;instance_fields.length;i++){
+			sb.append(instance_fields[i]+"\n");
+		}
+		sb.append("direct_methods:\n");
+		for(int i=0;i&lt;direct_methods.length;i++){
+			sb.append(direct_methods[i]+"\n");
+		}
+		sb.append("virtual_methods:\n");
+		for(int i=0;i&lt;virtual_methods.length;i++){
+			sb.append(virtual_methods[i]+"\n");
+		}
+		return sb.toString();
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">关于元素的格式 uleb128 在 string_ids 里有讲述过 ，不赘述 。<br>
+encoded_field 的结构如下 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class EncodedField {
+	
+	/**
+	 * struct encoded_field
+		{
+			uleb128 filed_idx_diff; // index into filed_ids for ID of this filed
+			uleb128 access_flags; // access flags like public, static etc.
+		}
+	 */
+	public byte[] filed_idx_diff;
+	public byte[] access_flags;
+	
+	@Override
+	public String toString(){
+		return "field_idx_diff:"+Utils.bytesToHexString(filed_idx_diff) + ",access_flags:"+Utils.bytesToHexString(filed_idx_diff);
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span">encoded_method 的结构如下 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class EncodedMethod {
+	
+	/**
+	 * struct encoded_method
+		{
+			uleb128 method_idx_diff;
+			uleb128 access_flags;
+			uleb128 code_off;
+		}
+	 */
+	
+	public byte[] method_idx_diff;
+	public byte[] access_flags;
+	public byte[] code_off;
+	
+	@Override
+	public String toString(){
+		return "method_idx_diff:"+Utils.bytesToHexString(method_idx_diff)+","+Utils.bytesToHexString(Utils.int2Byte(Utils.decodeUleb128(method_idx_diff)))
+				+",access_flags:"+Utils.bytesToHexString(access_flags)+","+Utils.bytesToHexString(Utils.int2Byte(Utils.decodeUleb128(access_flags)))
+				+",code_off:"+Utils.bytesToHexString(code_off)+","+Utils.bytesToHexString(Utils.int2Byte(Utils.decodeUleb128(code_off)));
+	}
+
+}
+</pre>
+<p><span class="Apple-style-span"><span class="Apple-style-span">(1) method_idx_diff：</span>前缀 methd_idx 表示它的值是 method_ids 的一个 index ，后缀 _diff 表示它是于另外一个 method_idx 的一个差值 ，就是相对于 encodeed_method [] 数组里上一个元素的 method_idx 的差值 。其实 encoded_filed – &gt; field_idx_diff 表示的也是相同的意思 ，只是编译出来的 Hello.dex 文件里没有使用到class filed 所以没有仔细讲 ，详细的参考 dex_format.html 的官网文档<br>
+<span class="Apple-style-span">(2) access_flags：</span>访问权限 ， 比如 public、private、static、final 等 。<br>
+<span class="Apple-style-span">(3) code_off：</span>一个指向 data 区的偏移地址 ，目标是本 method 的代码实现 。被指向的结构是<br>
+code_item ，有近 10 项元素 ，后面再详细解释 。<br>
+class_def_item — &gt; class_data_off = 0x 0234 。</span><br>
+<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215170426575" alt=""><br>
+<span class="Apple-style-span">名称为 LHello; 的 class 里只有 2 个 directive methods 。 directive_methods 里的值都是 uleb128 的原始二<br>
+进制值 。按照 directive_methods 的格式 encoded_method 再整理一次这 2 个 method 描述 ，得到结果如下<br>
+表格所描述 ：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215170520484" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">method 一个是 &lt;init&gt; , 一个是 main ， 这里我们需要用我们在string_ids那块介绍到的一个方法就是解码uleb125类型的方法得到正确的value值。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">3、class_def_item =&gt; class_data_item =&gt; code_item</span><br>
+到这里 ，逻辑的描述有点深入了 。我自己都有点分析不过来 ，先理一下是怎么走到这一步的 ，code_item<br>
+在 dex 里处于一个什么位置 。<br>
+(1) 一个 .dex 文件被分成了 9 个区 ，详细见 “1. dex 整个文件的布局 ” 。其中有一个索引区叫做<br>
+class_defs ， 索引了 .dex 里面用到的 class ，以及对这个 class 的描述 。<br>
+(2) class_defs 区 ， 这里面其实是class_def_item 结构 。这个结构里描述了 LHello; 的各种信息 ，诸如名称 ，superclass , access flag， interface 等 。class_def_item 里有一个元素 class_data_off , 指向data 区里的一个 class_data_item 结构 ，用来描述 class 使用到的各种数据 。自此以后的结构都归于 data区了 。<br>
+(3) class_data_item 结构 ，里描述值着 class 里使用到的 static field , instance field , direct_method ，和 virtual_method 的数目和描述 。例子 Hello.dex 里 ，只有 2 个 direct_method , 其余的 field 和method 的数目都为 0 。描述 direct_method 的结构叫做 encoded_method ，是用来详细描述某个 method的 。<br>
+(4) encoded_method 结构 ，描述某个 method 的 method 类型 ， access flags 和一个指向 code_item的偏移地址 ，里面存放的是该 method 的具体实现 。<br>
+(5) code_item ， 一层又一层 ，盗梦空间啊！简要的说 ，code_item 结构里描述着某个 method 的具体实现 。它的结构如下描述 ：</span></p>
+<pre class="java">package com.wjdiankong.parsedex.struct;
+
+import com.wjdiankong.parsedex.Utils;
+
+public class CodeItem {
+	
+	/**
+	 * struct code_item
+		{
+			ushort registers_size;
+			ushort ins_size;
+			ushort outs_size;
+			ushort tries_size;
+			uint debug_info_off;
+			uint insns_size;
+			ushort insns [ insns_size ];
+			ushort paddding; // optional
+			try_item tries [ tyies_size ]; // optional
+			encoded_catch_handler_list handlers; // optional
+		}
+	 */
+	
+	public short registers_size;
+	public short ins_size;
+	public short outs_size;
+	public short tries_size;
+	public int debug_info_off;
+	public int insns_size;
+	public short[] insns;
+	
+	@Override
+	public String toString(){
+		return "regsize:"+registers_size+",ins_size:"+ins_size
+				+",outs_size:"+outs_size+",tries_size:"+tries_size+",debug_info_off:"+debug_info_off
+				+",insns_size:"+insns_size + "\ninsns:"+getInsnsStr();
+	}
+	
+	private String getInsnsStr(){
+		StringBuilder sb = new StringBuilder();
+		for(int i=0;i&lt;insns.length;i++){
+			sb.append(Utils.bytesToHexString(Utils.short2Byte(insns[i]))+",");
+		}
+		return sb.toString();
+	}
+	
+}
+</pre>
+<p><span class="Apple-style-span">末尾的 3 项标志为 optional , 表示可能有 ，也可能没有 ，根据具体的代码来 。<br>
+<span class="Apple-style-span">(1) registers_size：</span>本段代码使用到的寄存器数目。<br>
+<span class="Apple-style-span">(2) ins_size：</span>method传入参数的数目 。<br>
+(<span class="Apple-style-span">3) outs_size： </span>本段代码调用其它method 时需要的参数个数 。<br>
+<span class="Apple-style-span">(4) tries_size： </span>try_item 结构的个数 。<br>
+<span class="Apple-style-span">(5) debug_off：</span>偏移地址 ，指向本段代码的 debug 信息存放位置 ，是一个 debug_info_item 结构。<br>
+<span class="Apple-style-span">(6) insns_size：</span>指令列表的大小 ，以 16-bit 为单位 。 insns 是 instructions 的缩写 。<br>
+<span class="Apple-style-span">(7) padding：</span>值为 0 ，用于对齐字节 。<br>
+<span class="Apple-style-span">(8) tries 和 handlers：</span>用于处理 java 中的 exception , 常见的语法有 try catch 。</span></p>
+<p>&nbsp;</p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">4、 分析 main method 的执行代码并与 smali 反编译的结果比较</span><br>
+在 8.2 节里有 2 个 method , 因为 main 里的执行代码是自己写的 ，分析它会熟悉很多 。偏移地址是<br>
+directive_method [1] -&gt; code_off = 0x0148 ，二进制描述如下 ：</span><br>
+<span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215170644437" alt=""></span><br>
+<span class="Apple-style-span">insns 数组里的 8 个二进制原始数据 ， 对这些数据的解析 ，需要对照官网的文档 《Dalvik VM Instruction<br>
+Format》和《Bytecode for Dalvik VM》。<br>
+分析思路整理如下<br>
+(1) 《Dalvik VM Instruction Format》 里操作符 op 都是位于首个 16bit 数据的低 8 bit ，起始的是 op =0x62。<br>
+(2) 在 《Bytecode for Dalvik VM》 里找到对应的 Syntax 和 format 。<br>
+syntax = sget_object<br>
+format = 0x21c 。<br>
+(3） 在《Dalvik VM Instruction Format》里查找 21c ， 得知 op = 0x62 的指令占据 2 个 16 bit 数据 ，格式是 AA|op BBBB ，解释为 op vAA, type@BBBB 。因此这 8 组 16 bit 数据里 ，前 2 个是一组 。对比数据得 AA=0x00, BBBB = 0x0000。<br>
+(4)返回《Bytecode for Dalvik VM》里查阅对 sget_object 的解释， AA 的值表示 Value Register ，即0 号寄存器； BBBB 表示 static field 的 index ，就是之前分析的field_ids 区里 Index = 0 指向的那个东西 ，当时的 fields_ids 的分析结果如下 ：</span><br>
+<span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215170725407" alt=""></span><br>
+<span class="Apple-style-span">对 field 常用的表述是<br>
+包含 field 的类型 -&gt; field 名称 ：field 类型 。<br>
+此次指向的就是 Ljava/lang/System; -&gt; out:Ljava/io/printStream;<br>
+(5) 综上 ，前 2 个 16 bit 数据 0x 0062 0000 , 解释为<br>
+sget_object v0, Ljava/lang/System; -&gt; out:Ljava/io/printStream;<br>
+其余的 6 个 16 bit 数据分析思路跟这个一样 ，依次整理如下 ：<br>
+<span class="Apple-style-span">0x011a 0x0001:</span>&nbsp;const-string v1, “Hello, Android!”</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">0x206e 0x0002 0x0010:</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">invoke-virtual {v0, v1}, Ljava/io/PrintStream; -&gt; println(Ljava/lang/String;)V</span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">0x000e: return-void</span><br>
+(6) 最后再整理下 main method , 用容易理解的方式表示出来就是 。<br>
+ACC_PUBLIC ACC_STATIC LHello;-&gt;main([Ljava/lang/String;)V<br>
+{<br>
+sget_object v0, Ljava/lang/System; -&gt; out:Ljava/io/printStream;<br>
+const-string v1,Hello, Android!<br>
+invoke-virtual {v0, v1}, Ljava/io/PrintStream; -&gt; println(Ljava/lang/String;)V<br>
+return-void<br>
+}<br>
+看起来很像 smali 格式语言 ，不妨使用 smali 反编译下 Hello.dex , 看看 smali 生成的代码跟方才推导出<br>
+来的有什么差异 。<br>
+.method public static main([Ljava/lang/String;)V<br>
+.registers 3<br>
+.prologue<br>
+.line 5<br>
+sget-object v0, Ljava/lang/System;-&gt;out:Ljava/io/PrintStream;<br>
+const-string v1, “Hello, Android!\n”<br>
+index 0<br>
+class_idx 0x04<br>
+type_idx 0x01<br>
+name_idx 0x0c<br>
+class string Ljava/lang/System;<br>
+type string Ljava/io/PrintStream;<br>
+name string out<br>
+invoke-virtual {v0, v1}, Ljava/io/PrintStream;-&gt;println(Ljava/lang/String;)V<br>
+.line 6<br>
+return-void<br>
+从内容上看 ，二者形式上有些差异 ，但表述的是同一个 method 。这说明刚才的分析走的路子是没有跑偏<br>
+的 。另外一个 method 是 &lt;init&gt; , 若是分析的话 ，思路和流程跟 main 一样 。走到这里，心里很踏实了。</span></p>
+<h1><span class="Apple-style-span">四、解析代码</span></h1>
+<p><span class="Apple-style-span">上面我们解析完了所有的数据结构区域，下面就来看看具体的解析代码，由于篇幅的原因，这里就不贴出全部的代码了，只贴出核心的代码：</span></p>
+<h2><span class="Apple-style-span"><span class="Apple-style-span">1、解析头部信息：</span></span></h2>
+<pre class="java">public static void praseDexHeader(byte[] byteSrc){
+	HeaderType headerType = new HeaderType();
+	//解析魔数
+	byte[] magic = Utils.copyByte(byteSrc, 0, 8);
+	headerType.magic = magic;
+
+	//解析checksum
+	byte[] checksumByte = Utils.copyByte(byteSrc, 8, 4);
+	headerType.checksum = Utils.byte2int(checksumByte);
+
+	//解析siganature
+	byte[] siganature = Utils.copyByte(byteSrc, 12, 20);
+	headerType.siganature = siganature;
+
+	//解析file_size
+	byte[] fileSizeByte = Utils.copyByte(byteSrc, 32, 4);
+	headerType.file_size = Utils.byte2int(fileSizeByte);
+
+	//解析header_size
+	byte[] headerSizeByte = Utils.copyByte(byteSrc, 36, 4);
+	headerType.header_size = Utils.byte2int(headerSizeByte);
+
+	//解析endian_tag
+	byte[] endianTagByte = Utils.copyByte(byteSrc, 40, 4);
+	headerType.endian_tag = Utils.byte2int(endianTagByte);
+
+	//解析link_size
+	byte[] linkSizeByte = Utils.copyByte(byteSrc, 44, 4);
+	headerType.link_size = Utils.byte2int(linkSizeByte);
+
+	//解析link_off
+	byte[] linkOffByte = Utils.copyByte(byteSrc, 48, 4);
+	headerType.link_off = Utils.byte2int(linkOffByte);
+
+	//解析map_off
+	byte[] mapOffByte = Utils.copyByte(byteSrc, 52, 4);
+	headerType.map_off = Utils.byte2int(mapOffByte);
+
+	//解析string_ids_size
+	byte[] stringIdsSizeByte = Utils.copyByte(byteSrc, 56, 4);
+	headerType.string_ids_size = Utils.byte2int(stringIdsSizeByte);
+
+	//解析string_ids_off
+	byte[] stringIdsOffByte = Utils.copyByte(byteSrc, 60, 4);
+	headerType.string_ids_off = Utils.byte2int(stringIdsOffByte);
+
+	//解析type_ids_size
+	byte[] typeIdsSizeByte = Utils.copyByte(byteSrc, 64, 4);
+	headerType.type_ids_size = Utils.byte2int(typeIdsSizeByte);
+
+	//解析type_ids_off
+	byte[] typeIdsOffByte = Utils.copyByte(byteSrc, 68, 4);
+	headerType.type_ids_off = Utils.byte2int(typeIdsOffByte);
+
+	//解析proto_ids_size
+	byte[] protoIdsSizeByte = Utils.copyByte(byteSrc, 72, 4);
+	headerType.proto_ids_size = Utils.byte2int(protoIdsSizeByte);
+
+	//解析proto_ids_off
+	byte[] protoIdsOffByte = Utils.copyByte(byteSrc, 76, 4);
+	headerType.proto_ids_off = Utils.byte2int(protoIdsOffByte);
+
+	//解析field_ids_size
+	byte[] fieldIdsSizeByte = Utils.copyByte(byteSrc, 80, 4);
+	headerType.field_ids_size = Utils.byte2int(fieldIdsSizeByte);
+
+	//解析field_ids_off
+	byte[] fieldIdsOffByte = Utils.copyByte(byteSrc, 84, 4);
+	headerType.field_ids_off = Utils.byte2int(fieldIdsOffByte);
+
+	//解析method_ids_size
+	byte[] methodIdsSizeByte = Utils.copyByte(byteSrc, 88, 4);
+	headerType.method_ids_size = Utils.byte2int(methodIdsSizeByte);
+
+	//解析method_ids_off
+	byte[] methodIdsOffByte = Utils.copyByte(byteSrc, 92, 4);
+	headerType.method_ids_off = Utils.byte2int(methodIdsOffByte);
+
+	//解析class_defs_size
+	byte[] classDefsSizeByte = Utils.copyByte(byteSrc, 96, 4);
+	headerType.class_defs_size = Utils.byte2int(classDefsSizeByte);
+
+	//解析class_defs_off
+	byte[] classDefsOffByte = Utils.copyByte(byteSrc, 100, 4);
+	headerType.class_defs_off = Utils.byte2int(classDefsOffByte);
+
+	//解析data_size
+	byte[] dataSizeByte = Utils.copyByte(byteSrc, 104, 4);
+	headerType.data_size = Utils.byte2int(dataSizeByte);
+
+	//解析data_off
+	byte[] dataOffByte = Utils.copyByte(byteSrc, 108, 4);
+	headerType.data_off = Utils.byte2int(dataOffByte);
+
+	System.out.println("header:"+headerType);
+
+	stringIdOffset = headerType.header_size;//header之后就是string ids
+
+	stringIdsSize = headerType.string_ids_size;
+	stringIdsOffset = headerType.string_ids_off;
+	typeIdsSize = headerType.type_ids_size;
+	typeIdsOffset = headerType.type_ids_off;
+	fieldIdsSize = headerType.field_ids_size;
+	fieldIdsOffset = headerType.field_ids_off;
+	protoIdsSize = headerType.proto_ids_size;
+	protoIdsOffset = headerType.proto_ids_off;
+	methodIdsSize = headerType.method_ids_size;
+	methodIdsOffset = headerType.method_ids_off;
+	classIdsSize = headerType.class_defs_size;
+	classIdsOffset = headerType.class_defs_off;
+
+	mapListOffset = headerType.map_off;
+
+}</pre>
+<p><span class="Apple-style-span">这里没啥说的，就是记录几个索引区的偏移值和大小信息。</span></p>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215172215553" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span">2、解析string_ids索引区</span></h2>
+<pre class="java">/************************解析字符串********************************/
+public static void parseStringIds(byte[] srcByte){
+	int idSize = StringIdsItem.getSize();
+	int countIds = stringIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		stringIdsList.add(parseStringIdsItem(Utils.copyByte(srcByte, stringIdsOffset+i*idSize, idSize)));
+	}
+	System.out.println("string size:"+stringIdsList.size());
+}
+
+public static void parseStringList(byte[] srcByte){
+	//第一个字节还是字符串的长度
+	for(StringIdsItem item : stringIdsList){
+		String str = getString(srcByte, item.string_data_off);
+		System.out.println("str:"+str);
+		stringList.add(str);
+	}
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215172305381" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span">3、解析type_ids索引区</span></h2>
+<pre class="java">/***************************解析类型******************************/
+public static void parseTypeIds(byte[] srcByte){
+	int idSize = TypeIdsItem.getSize();
+	int countIds = typeIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		typeIdsList.add(parseTypeIdsItem(Utils.copyByte(srcByte, typeIdsOffset+i*idSize, idSize)));
+	}
+
+	//这里的descriptor_idx就是解析之后的字符串中的索引值
+	for(TypeIdsItem item : typeIdsList){
+		System.out.println("typeStr:"+stringList.get(item.descriptor_idx));
+	}
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215172340085" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span">4、解析proto_ids索引区</span></h2>
+<pre class="html">/***************************解析Proto***************************/
+public static void parseProtoIds(byte[] srcByte){
+	int idSize = ProtoIdsItem.getSize();
+	int countIds = protoIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		protoIdsList.add(parseProtoIdsItem(Utils.copyByte(srcByte, protoIdsOffset+i*idSize, idSize)));
+	}
+
+	for(ProtoIdsItem item : protoIdsList){
+		System.out.println("proto:"+stringList.get(item.shorty_idx)+","+stringList.get(item.return_type_idx));
+		//有的方法没有参数，这个值就是0
+		if(item.parameters_off != 0){
+			item = parseParameterTypeList(srcByte, item.parameters_off, item);
+		}
+	}
+}
+
+//解析方法的所有参数类型
+private static ProtoIdsItem parseParameterTypeList(byte[] srcByte, int startOff, ProtoIdsItem item){
+	//解析size和size大小的List中的内容
+	byte[] sizeByte = Utils.copyByte(srcByte, startOff, 4);
+	int size = Utils.byte2int(sizeByte);
+	List&lt;String&gt; parametersList = new ArrayList&lt;String&gt;();
+	List&lt;Short&gt; typeList = new ArrayList&lt;Short&gt;(size);
+	for(int i=0;i&lt;size;i++){
+		byte[] typeByte = Utils.copyByte(srcByte, startOff+4+2*i, 2);
+		typeList.add(Utils.byte2Short(typeByte));
+	}
+	System.out.println("param count:"+size);
+	for(int i=0;i&lt;typeList.size();i++){
+		System.out.println("type:"+stringList.get(typeList.get(i)));
+		int index = typeIdsList.get(typeList.get(i)).descriptor_idx;
+		parametersList.add(stringList.get(index));
+	}
+
+	item.parameterCount = size;
+	item.parametersList = parametersList;
+
+	return item;
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215172421242" alt=""><br>
+</span></p>
+<p>&nbsp;</p>
+<h2><span class="Apple-style-span">5、解析field_ids索引区</span></h2>
+<pre class="java">/***************************解析字段****************************/
+public static void parseFieldIds(byte[] srcByte){
+	int idSize = FieldIdsItem.getSize();
+	int countIds = fieldIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		fieldIdsList.add(parseFieldIdsItem(Utils.copyByte(srcByte, fieldIdsOffset+i*idSize, idSize)));
+	}
+
+	for(FieldIdsItem item : fieldIdsList){
+		int classIndex = typeIdsList.get(item.class_idx).descriptor_idx;
+		int typeIndex = typeIdsList.get(item.type_idx).descriptor_idx;
+		System.out.println("class:"+stringList.get(classIndex)+",name:"+stringList.get(item.name_idx)+",type:"+stringList.get(typeIndex));
+	}
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215172421242" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span">6、解析method_ids索引区</span></h2>
+<pre class="java">/***************************解析方法*****************************/
+public static void parseMethodIds(byte[] srcByte){
+	int idSize = MethodIdsItem.getSize();
+	int countIds = methodIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		methodIdsList.add(parseMethodIdsItem(Utils.copyByte(srcByte, methodIdsOffset+i*idSize, idSize)));
+	}
+
+	for(MethodIdsItem item : methodIdsList){
+		int classIndex = typeIdsList.get(item.class_idx).descriptor_idx;
+		int returnIndex = protoIdsList.get(item.proto_idx).return_type_idx;
+		String returnTypeStr = stringList.get(typeIdsList.get(returnIndex).descriptor_idx);
+		int shortIndex = protoIdsList.get(item.proto_idx).shorty_idx;
+		String shortStr = stringList.get(shortIndex);
+		List&lt;String&gt; paramList = protoIdsList.get(item.proto_idx).parametersList;
+		StringBuilder parameters = new StringBuilder();
+		parameters.append(returnTypeStr+"(");
+		for(String str : paramList){
+			parameters.append(str+",");
+		}
+		parameters.append(")"+shortStr);
+		System.out.println("class:"+stringList.get(classIndex)+",name:"+stringList.get(item.name_idx)+",proto:"+parameters);
+	}
+
+}</pre>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215173027765" alt=""><br>
+</span></p>
+<h2><span class="Apple-style-span">7、解析class_def区域</span></h2>
+<pre class="java">/****************************解析类*****************************/
+public static void parseClassIds(byte[] srcByte){
+	System.out.println("classIdsOffset:"+Utils.bytesToHexString(Utils.int2Byte(classIdsOffset)));
+	System.out.println("classIds:"+classIdsSize);
+	int idSize = ClassDefItem.getSize();
+	int countIds = classIdsSize;
+	for(int i=0;i&lt;countIds;i++){
+		classIdsList.add(parseClassDefItem(Utils.copyByte(srcByte, classIdsOffset+i*idSize, idSize)));
+	}
+	for(ClassDefItem item : classIdsList){
+		System.out.println("item:"+item);
+		int classIdx = item.class_idx;
+		TypeIdsItem typeItem = typeIdsList.get(classIdx);
+		System.out.println("classIdx:"+stringList.get(typeItem.descriptor_idx));
+		int superClassIdx = item.superclass_idx;
+		TypeIdsItem superTypeItem = typeIdsList.get(superClassIdx);
+		System.out.println("superitem:"+stringList.get(superTypeItem.descriptor_idx));
+		int sourceIdx = item.source_file_idx;
+		String sourceFile = stringList.get(sourceIdx);
+		System.out.println("sourceFile:"+sourceFile);
+		classDataMap.put(sourceFile, item);
+	}
+}</pre>
+<p><span class="Apple-style-span">解析结果：</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160215173150564" alt=""></span><br>
+<span class="Apple-style-span">这里我们看到解析结果我们可能有点看不懂，其实这里我是没有在继续解读下去了，为什么，因为我们通过class_def的数据结构解析可以看到，我们需要借助《Bytecode for Dalvik VM》这个来进行查阅具体的指令，然后翻译成具体的指令代码，关于这个指令表可以参考这里：<a href="http://www.netmite.com/android/mydroid/dalvik/docs/dalvik-bytecode.html" target="_blank" data-original-title="" title="">http://www.netmite.com/android/mydroid/dalvik/docs/dalvik-bytecode.html</a>，所以具体解析并不复杂，所以这里就不在详细解析了，具体的解析思路，可以参考class_def的数据结构解析那一块的内容，上面又说道。</span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">项目下载地址：<a href="http://download.csdn.net/detail/jiangwei0910410003/9432263" target="_blank" data-original-title="" title="">http://download.csdn.net/detail/jiangwei0910410003/9432263</a></span></span></p>
+<p><span class="Apple-style-span"><span class="Apple-style-span">注意：</span></span></p>
+<p><span class="Apple-style-span">我们到这里算是解析完了dex文件了，但是我现在要告诉大家，其实Android中有一个工具可以为我们做这个事，不知道大家还记得我们之前介绍解析AndroidManifest.xml和resource.arsc文件格式的时候，也是一样的，直接用aapt命令就可以查看了，这里也是一样的，只是这个工具是：<span class="Apple-style-span">dexdump</span></span></p>
+<p><span class="Apple-style-span">这个命令也是在AndroidSdk目录下的build-tools下面，这里我们可以将打印的结果重定向到demo.txt文件中</span></p>
+<p><span class="Apple-style-span"><img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160301201751991" alt=""><br>
+</span></p>
+<p><span class="Apple-style-span">那么我们上面做的解析工作是不是就没有用了呢？当然不是，我们在后面会说道我们解析dex格式有很多用途的。</span></p>
+<h1><span class="Apple-style-span">五、技术总结和概述</span></h1>
+<p><span class="Apple-style-span">到这里我们就解析完了dex文件的所有东东，讲解的内容有点多，在这里就来总结一下：</span></p>
+<h2><span class="Apple-style-span">第一、学习到的技术</span></h2>
+<p><span class="Apple-style-span">1、我们学习到了如何不是用任何的IDE工具，就可以构造一个dex文件出来，主要借助于java和dx命令。同时，我们也学会了一个可以执行dex文件的命令：dalvikvm；不过这个命令需要root权限。</span></p>
+<p><span class="Apple-style-span">2、我们了解到了Android中的DVM指令，如何翻译指令代码。</span></p>
+<p><span class="Apple-style-span">3、学习了一个数据类型：uleb128，如何将uleb128类型和int类型进行转化。</span></p>
+<h2><span class="Apple-style-span">第二、未解决的问题</span></h2>
+<p><span class="Apple-style-span">我们在整个解析的过程中会发现，我们这里只是用一个非常简单的dex来做案例解析，所以解析起来也很容易，但是我们实际的过程中，不会这么简单的，一个类可能实现多个接口，内部类，注解等信息的时候，解析起来肯定还要复杂，那么我们这篇文章主要的目的是介绍一下dex的文件格式，目的不是说去解决实际中项目的问题，所以后面在解析复杂的dex的时候，我们也只能遇到什么问题就去解决一下。</span></p>
+<h2><span class="Apple-style-span">第三、我们解析dex的目的是啥？</span></h2>
+<p><span class="Apple-style-span">我们开始的时候，并没有介绍说解析dex干啥？那么现在可以说，解析完dex之后我们有很多事都可以做了。</span></p>
+<p><span class="Apple-style-span">1、我们可以检测一个apk中是否包含了指定系统的api(当然这些api没有被混淆)，同样也可以检测这个apk是否包含了广告，以前我们可以通过解析AndroidManifest.xml文件中的service，activity，receiver，meta等信息来判断，因为现在的广告sdk都需要添加这些东西，如果我们可以解析dex的话，那么我们可以得到他的所有字符串内容，就是string_ids池，这样就可以判断调用了哪些api。那么就可以判断这个apk的一些行为了，当然这里还有一个问题，假如dex加密了我们就蛋疼了。好吧，那就牵涉出第二件事了。</span></p>
+<p><span class="Apple-style-span">2、我们在之前说过如何对apk进行加固，其实就是加密apk/dex文件内容，那么这时候我们必须要了解dex的文件结构信息，因为我们先加密dex,然后在动态加载dex进行解密即可。</span></p>
+<p><span class="Apple-style-span">3、我们可以更好的逆向工作，其实说到这里，我们看看apktool源码也知道，他内部的反编译原理就是这些，只是他会将指令翻译成smail代码，这个网上是有相对应的jar包api的，所以我们知道了dex的数据结构，那么原理肯定就知道了，同样还有一个dex2jar工具原理也是类似的。</span></p>
+<h1><span class="Apple-style-span">六、总结</span></h1>
+<p><span class="Apple-style-span">到这里我们就介绍完了dex文件格式的解析工作，至此我们也解析完了Android中编译之后的所有文件格式，我之所以介绍这几篇文章，一来是更好的了解Android中生成apk的流程，其次是我们能更好的的解决反编译过程中遇到的问题，我们需要去解决。这篇文章解析起来还是很费劲的，累死了，也是2016年第一篇文章，谢谢大家的支持~~。记得点赞呀~~</span></p>
+<p>&nbsp;</p>
+<div></div>
+<div>
+<p style="text-align: center;"><strong><span class="Apple-style-span"><span style="font-size: large;">关注微信公众号，最新Android技术实时推送</span></span></strong></p>
+<div><img class="aligncenter" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160602145455307"></div>
+<div></div>
+<div><img class="aligncenter" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160606125422292"></div>
+<div></div>
+<div></div>
+</div>
+<p>转载请注明：<a href="http://www.wjdiankong.cn/" data-original-title="" title="">尼古拉斯.赵四</a> » <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" data-original-title="" title="">Android逆向之旅—解析编译之后的Dex文件格式</a></p>
+
+      
+<div class="article-social">
+			<a href="javascript:;" data-action="ding" data-id="579" id="Addlike" class="action" data-original-title="" title=""><i class="fa fa-heart-o"></i>喜欢 (<span class="count">16</span>)</a><span class="or">or</span><span class="action action-share bdsharebuttonbox bdshare-button-style0-24" data-bd-bind="1520346804263"><i class="fa fa-share-alt"></i>分享 (<span class="bds_count" data-cmd="count" title="累计分享0次">0</span>)<div class="action-popover"><div class="popover top in"><div class="arrow"></div><div class="popover-content"><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="sinaweibo fa fa-weibo" data-cmd="tsina" title="" data-original-title="分享到新浪微博"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_qzone fa fa-star" data-cmd="qzone" title="" data-original-title="分享到QQ空间"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="tencentweibo fa fa-tencent-weibo" data-cmd="tqq" title="" data-original-title="分享到腾讯微博"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="qq fa fa-qq" data-cmd="sqq" title="" data-original-title="分享到QQ好友"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_renren fa fa-renren" data-cmd="renren" title="" data-original-title="分享到人人网"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_weixin fa fa-weixin" data-cmd="weixin" title="" data-original-title="分享到微信"></a><a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84dex%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/#" class="bds_more fa fa-ellipsis-h" data-cmd="more" data-original-title="" title=""></a></div></div></div></span>	
+</div>
+	</article>	
+				<footer class="article-footer">
+			</footer>
+	<nav class="article-nav">
+			<span class="article-nav-prev"><i class="fa fa-angle-double-left"></i> <a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84resource-arsc%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f/" rel="prev">Android逆向之旅—解析编译之后的Resource.arsc文件格式</a></span>
+			<span class="article-nav-next"><a href="http://www.wjdiankong.cn/android%e8%a7%a3%e6%9e%90%e7%bc%96%e8%af%91%e4%b9%8b%e5%90%8e%e7%9a%84%e6%89%80%e6%9c%89%e6%96%87%e4%bb%b6sodexxmlarsc%e6%a0%bc%e5%bc%8f/" rel="next">Android解析编译之后的所有文件(so,dex,xml,arsc)格式</a>  <i class="fa fa-angle-double-right"></i></span>
+		</nav>
+
+		<div class="related_top">
+			<div class="related_posts"><ul class="related_img">
+
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/" title="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/timthumb.php" alt="2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！"><br><span class="r_title">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/" title="全球首款短视频聚合应用「酱爆视频」开发技术介绍" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/timthumb(1).php" alt="全球首款短视频聚合应用「酱爆视频」开发技术介绍"><br><span class="r_title">全球首款短视频聚合应用「酱爆视频」开发技术介绍</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/timthumb(2).php" alt="为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！"><br><span class="r_title">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</span></a>
+		</li>
+	
+	<li class="related_box">
+		<a href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/" title="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇" target="_blank">
+		<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/timthumb(3).php" alt="Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇"><br><span class="r_title">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</span></a>
+		</li>
+	</ul>
+
+<div class="relates">
+<ul>
+<li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">Android逆向之旅—Android中分析某手短视频的数据请求加密协议(IDA静态分析SO)第三篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e9%80%86%e5%90%91%e4%b9%8b%e6%97%85-android%e4%b8%ad%e5%88%86%e6%9e%90%e6%9f%90%e7%9f%ad%e8%a7%86%e9%a2%91%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%aeid/">Android逆向之旅—Android中分析某拍短视频的数据请求加密协议(IDA动态调试SO)第二篇</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/2017%e5%b9%b4%e6%9c%80%e5%90%8e%e4%b8%80%e7%af%87%e6%8a%80%e6%9c%af%e6%96%87%e7%ab%a0%ef%bc%9a%e5%be%ae%e4%bf%a1%e5%b0%8f%e7%a8%8b%e5%ba%8f%e6%b8%b8%e6%88%8f%e8%b7%b3%e4%b8%80%e8%b7%b3%e5%88%b7/">2017年最后一篇技术文章：微信小程序游戏”跳一跳”刷榜原理解析</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/%e7%a7%bb%e5%8a%a8%e5%ae%89%e5%85%a8%e8%91%97%e4%bd%9c%e3%80%8aandroid%e5%ba%94%e7%94%a8%e5%ae%89%e5%85%a8%e9%98%b2%e6%8a%a4%e5%92%8c%e9%80%86%e5%90%91%e5%88%86%e6%9e%90%e3%80%8b%e7%bb%88%e4%ba%8e/">移动安全著作《Android应用安全防护和逆向分析》终于发售了，赶紧来购买吧！</a></li><li><i class="fa fa-minus"></i><a target="_blank" href="http://www.wjdiankong.cn/android%e4%b8%adjava%e5%92%8csmali%e8%bd%ac%e5%8c%96%e4%b8%80%e9%94%ae%e5%8c%96%e6%93%8d%e4%bd%9c%e5%b7%a5%e5%85%b7java2smali%e5%8e%9f%e7%90%86%e5%88%86%e6%9e%90/">Android中java和smali转化一键化操作工具java2smali原理分析</a></li>
+</ul></div></div>		</div>
+						<div id="respond" class="no_webshot">
+		<form action="http://www.wjdiankong.cn/wp-comments-post.php" method="post" id="commentform">
+		
+		<div class="comt-title">
+			<div class="comt-avatar pull-left">
+				<img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/saved_resource" width="54" height="54" alt="" class="avatar avatar-54 wp-user-avatar wp-user-avatar-54 photo avatar-default">			</div>
+			<div class="comt-author pull-left">
+			lopend <span>发表我的评论</span> &nbsp; <a class="switch-author" href="javascript:;" data-type="switch-author" style="font-size:12px;">换个身份</a>			</div>
+			<a id="cancel-comment-reply-link" class="pull-right" href="javascript:;">取消评论</a>
+		</div>
+		
+		<div class="comt">
+			<div class="comt-box">
+				<textarea placeholder="写点什么..." class="input-block-level comt-area" name="comment" id="comment" cols="100%" rows="3" tabindex="1" onkeydown="if(event.ctrlKey&amp;&amp;event.keyCode==13){document.getElementById(&#39;submit&#39;).click();return false};"></textarea>
+				<div class="comt-ctrl">
+					<button class="btn btn-primary pull-right" type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-check-square-o"></i> 提交评论</button>
+					<div class="comt-tips pull-right"><input type="hidden" name="comment_post_ID" value="579" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="fb5eee4fd9"></p><p style="display: none;"></p><div class="comt-tip comt-loading" style="display: none;">正在提交, 请稍候...</div><div class="comt-tip comt-error" style="display: none;">#</div></div>
+					<span data-type="comment-insert-smilie" class="muted comt-smilie"><i class="fa fa-smile-o"></i> 表情</span>
+					<span class="muted comt-mailme"><label for="comment_mail_notify" class="checkbox inline" style="padding-top:0"><input type="checkbox" name="comment_mail_notify" id="comment_mail_notify" value="comment_mail_notify" checked="checked">有人回复时邮件通知我</label></span>
+				</div>
+			</div>
+
+												<div class="comt-comterinfo" id="comment-author-info" style="display:none">
+						<h4>Hi，您需要填写昵称和邮箱！</h4>
+						<ul>
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="lopend" tabindex="2" placeholder="昵称"><span class="help-inline">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="2264373600@qq.com" tabindex="3" placeholder="邮箱"><span class="help-inline">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">网址</label><input class="ipt" type="text" name="url" id="url" value="http://aheadlcx.com" tabindex="4" placeholder="网址"><span class="help-inline">网址</span></li>
+						</ul>
+					</div>
+									</div>
+
+		
+	<input type="hidden" id="ak_js" name="ak_js" value="1520346803553"></form>
+	</div>
+			</div>
+</div>
+<aside class="sidebar">	
+<div class="widget widget_text"><div class="textwidget"><div class="social">
+</div></div></div>
+
+<div class="widget widget_text"><div class="title"><h2>安全书籍</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center;">
+<font color="#FF0000" size="4"><b>《Android应用安全防护和逆向分析》</b></font>
+<br><br>
+<font color="#FF6655" size="3"><b>360创始人周鸿祎、CSDN创始人蒋涛、看雪创始人段钢联袂推荐</b></font>
+<br><br>
+<font color="#078899" size="2"><b>零基础学习移动安全逆向，手把手带你进入安全逆向领域！安全不息，逆向不止！让别人的应用都成为我们手中的炮灰！</b></font><br><br>
+<font color="#070449" size="2"><b>读者技术交流QQ群：682646223</b></font><br><br>
+<font color="#00A67C" size="4"><b>购买地址：</b></font>
+<a href="https://item.jd.com/12271376.html"><font color="#FF0000" size="4"><b>京东</b></font></a>
+<a href="https://detail.tmall.com/item.htm?id=561791430421"><font color="#FF0000" size="4"><b>天猫</b></font></a>
+<br><br>
+<a href="https://item.jd.com/12271376.html"><img style="width:200px; height:200px" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20171218160639075"></a>
+<br><br>
+</div></div>
+		</div><div class="widget widget_text"><div class="title"><h2>微信公众号</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent{
+			width: 300px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg img{
+			width: 220px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent">
+
+											<div class="desc">
+                                                关注微信公众号，技术干货实时分享
+                                            </div>
+                                            <div class="subtitle">
+                                                公众号名称：编码美丽
+                                            </div>
+
+                                            <div class="contentimg">
+                                                <img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20160822091821005">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的技术圈</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 340px;
+			height: 300px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 140px;
+			height: 220px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫进入技术圈进行问题答疑和技术交流
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20171030170137755">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>我的微信</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parent1{
+			width: 300px;
+			height: 280px;
+			margin:0 auto;
+			margin-top: 20px;
+		}
+
+		.title1{
+			color: #FF666A;
+			font-size:26px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 20px;
+			margin-bottom: 10px;
+		}
+
+		.subtitle1{
+			color: #00A67C;
+			font-size:14px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+		}
+
+		.contentimg1 img{
+			width: 200px;
+			height: 200px;
+			margin: 0 auto;
+			display: block;
+		}
+
+		.desc1{
+			color: #FF4F79;
+			font-size:18px;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 10px;
+			margin-top: 10px;
+		}
+	</style>
+
+
+
+<div class="parent1">
+
+											<div class="desc1">
+                                                扫一扫加我微信交流问题
+                                            </div>
+                                            
+
+                                            <div class="contentimg1">
+                                                <img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20170113090254862">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>小编众筹</h2></div>			<div class="textwidget">
+	<title></title>
+	<style type="text/css">
+		.parentss{
+			width: 360px;
+			height: 360px;
+			margin:0 auto;
+			margin-top: 40px;
+		}
+
+		.contentimgss img{
+			width: 320px;
+			height: 320px;
+			margin: 0 auto;
+			display: block;
+		}
+
+	</style>
+
+
+
+<div class="parentss">
+
+                                            <div class="contentimgss">
+                                                <img src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/get_money1.png">
+                                            </div>
+</div>                                            
+
+</div>
+		</div><div class="widget widget_text"><div class="title"><h2>酱爆视频</h2></div>			<div class="textwidget"><div class="text" style=" text-align:center">
+<b></b><div class="text" style=" text-align:center;"><b><font color="#FF6655" size="5">酱爆视频</font>
+<br><br>
+<img style="width:80px; height:80px" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/20151210222101553">
+</b></div><b><b><br>
+<font color="#078899" size="3"><b>全球首款短视频聚合应用「酱爆视频」正式发布</b></font>
+<br><br>
+<font color="#00A67C" size="2"><b>别人等车干着急，我在酱爆看视频</b></font>
+<br>
+<font color="#00A67C" size="2"><b>想你说想，为你所做！</b></font>
+<br>
+<font color="#00A67C" size="2"><b>不负众望，就在酱爆！</b></font>
+<br><br>
+<a href="http://www.wjdiankong.cn/%E5%85%A8%E7%90%83%E9%A6%96%E6%AC%BE%E7%9F%AD%E8%A7%86%E9%A2%91%E8%81%9A%E5%90%88%E5%BA%94%E7%94%A8%E3%80%8C%E9%85%B1%E7%88%86%E8%A7%86%E9%A2%91%E3%80%8D%E5%BC%80%E5%8F%91%E6%8A%80%E6%9C%AF%E4%BB%8B/"><font color="#FF0000" size="4"><div class="text" style=" text-align:center;">点击查看详情</div></font></a></b></b><br></div></div>
+		</div>		<div class="widget widget_recent_entries">		<div class="title"><h2>近期文章</h2></div>		<ul>
+					<li>
+				<a href="http://www.wjdiankong.cn/python%e7%88%ac%e5%8f%96%e5%ba%94%e7%94%a8%e3%80%8c%e8%8b%b1%e8%af%ad%e6%b5%81%e5%88%a9%e8%af%b4%e3%80%8d%e7%9a%84%e9%85%8d%e9%9f%b3%e8%a7%86%e9%a2%91%e6%95%b0%e6%8d%ae%e7%ac%ac%e4%b8%80%e6%ac%a1/">Python爬取应用「英语流利说」的配音视频数据(第一次这么粉一个人)</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/2017%e5%b9%b4%e7%bc%96%e7%a0%81%e7%be%8e%e4%b8%bd%e4%bc%98%e7%a7%80%e7%b2%be%e5%8d%8e%e6%96%87%e7%ab%a0%e5%9b%9e%e9%a1%be%ef%bc%8c%e6%84%9f%e8%b0%a2%e6%9c%89%e6%82%a8%e7%9a%84%e4%b8%80%e8%b7%af/">2017年编码美丽优秀精华文章回顾，感谢有您的一路陪伴！</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e8%ae%be%e8%ae%a1%e6%a8%aa%e7%ab%96%e5%b1%8f/">全球首款短视频聚合应用「酱爆视频」设计横竖屏的海报宣传图</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e5%85%a8%e7%90%83%e9%a6%96%e6%ac%be%e7%9f%ad%e8%a7%86%e9%a2%91%e8%81%9a%e5%90%88%e5%ba%94%e7%94%a8%e3%80%8c%e9%85%b1%e7%88%86%e8%a7%86%e9%a2%91%e3%80%8d%e5%bc%80%e5%8f%91%e6%8a%80%e6%9c%af%e4%bb%8b/">全球首款短视频聚合应用「酱爆视频」开发技术介绍</a>
+						</li>
+					<li>
+				<a href="http://www.wjdiankong.cn/%e4%b8%ba%e4%bb%80%e4%b9%88%e6%88%91%e8%a6%81%e6%ad%bb%e7%a3%95%e7%9f%ad%e8%a7%86%e9%a2%91%e5%9b%9b%e5%b0%8f%e9%be%99%e7%9a%84%e6%95%b0%e6%8d%ae%e8%af%b7%e6%b1%82%e5%8a%a0%e5%af%86%e5%8d%8f%e8%ae%ae/">为什么我要死磕短视频四小龙的数据请求加密协议？因为我带你飞，伤痛我背！</a>
+						</li>
+				</ul>
+		</div>		<div class="widget widget_categories"><div class="title"><h2>分类目录</h2></div>		<ul>
+	<li class="cat-item cat-item-2"><a href="http://www.wjdiankong.cn/category/android%e6%8a%80%e6%9c%af%e7%af%87/">Android技术篇</a> (186)
+</li>
+	<li class="cat-item cat-item-10"><a href="http://www.wjdiankong.cn/category/cc/">C/C++</a> (4)
+</li>
+	<li class="cat-item cat-item-3"><a href="http://www.wjdiankong.cn/category/ios%e6%8a%80%e6%9c%af%e7%af%87/">iOS技术篇</a> (4)
+</li>
+	<li class="cat-item cat-item-5"><a href="http://www.wjdiankong.cn/category/javaweb%e6%8a%80%e6%9c%af%e7%af%87/">JavaWeb技术篇</a> (29)
+</li>
+	<li class="cat-item cat-item-4"><a href="http://www.wjdiankong.cn/category/java%e6%8a%80%e6%9c%af%e7%af%87/">Java技术篇</a> (26)
+</li>
+	<li class="cat-item cat-item-11"><a href="http://www.wjdiankong.cn/category/oc%e5%ad%a6%e4%b9%a0%e7%af%87/">OC学习篇</a> (26)
+</li>
+	<li class="cat-item cat-item-16"><a href="http://www.wjdiankong.cn/category/python/">Python</a> (2)
+</li>
+	<li class="cat-item cat-item-13"><a href="http://www.wjdiankong.cn/category/ui%e8%ae%be%e8%ae%a1%e7%af%87/">UI设计篇</a> (2)
+</li>
+	<li class="cat-item cat-item-15"><a href="http://www.wjdiankong.cn/category/%e5%ae%89%e5%85%a8%e5%92%8c%e9%80%86%e5%90%91/">安全和逆向</a> (67)
+</li>
+	<li class="cat-item cat-item-9"><a href="http://www.wjdiankong.cn/category/%e5%bc%80%e5%8f%91%e5%b7%a5%e5%85%b7%e7%af%87/">开发工具篇</a> (12)
+</li>
+	<li class="cat-item cat-item-8"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e5%ba%93%e6%8a%80%e6%9c%af%e7%af%87/">数据库技术篇</a> (6)
+</li>
+	<li class="cat-item cat-item-6"><a href="http://www.wjdiankong.cn/category/%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%e5%92%8c%e7%ae%97%e6%b3%95/">数据结构和算法</a> (8)
+</li>
+	<li class="cat-item cat-item-1"><a href="http://www.wjdiankong.cn/category/uncategorized/">未分类</a> (3)
+</li>
+	<li class="cat-item cat-item-14"><a href="http://www.wjdiankong.cn/category/%e7%bd%91%e9%a1%b5%e5%89%8d%e7%ab%af/">网页前端</a> (1)
+</li>
+		</ul>
+</div></aside></section>
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="copyright pull-left">
+         <a href="http://yusi123.com/" title="欲思博客">欲思博客</a> 版权所有，保留一切权利 · <a href="http://yusi123.com/sitemap.xml" title="站点地图">站点地图</a>   ·   基于WordPress构建   © 2011-2014  ·   托管于 <a rel="nofollow" target="_blank" href="http://yusi123.com/go/aliyun">阿里云主机</a> &amp; <a rel="nofollow" target="_blank" href="http://yusi123.com/go/qiniu">七牛云存储</a>
+        </div>
+        <div class="trackcode pull-right">
+            <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?44932c23fd6a7e829cb31896e6c9c5a7";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* <![CDATA[ */
+var rcGlobal = {
+	serverUrl		:'http://www.wjdiankong.cn',
+	infoTemp		:'%REVIEWER% 在 %POST%',
+	loadingText		:'正在加载',
+	noCommentsText	:'没有任何评论',
+	newestText		:'&laquo; 最新的',
+	newerText		:'&laquo; 上一页',
+	olderText		:'下一页 &raquo;',
+	showContent		:'1',
+	external		:'1',
+	avatarSize		:'32',
+	avatarPosition	:'left',
+	anonymous		:'匿名'
+};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/form.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/wp-recentcomments.js"></script>
+<script type="text/javascript" src="./Android逆向之旅—解析编译之后的Dex文件格式 _ 尼古拉斯.赵四_files/wp-embed.min.js"></script>
+<script>with(document)0[(getElementsByTagName("head")[0]||body).appendChild(createElement("script")).src="http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion="+~(-new Date()/36e5)];</script>
+<div class="rollto" style="display: block; opacity: 0.00301952;"><button class="btn btn-inverse" data-type="totop" title="回顶部"><i class="fa fa-arrow-up"></i></button><button class="btn btn-inverse" data-type="torespond" title="发评论"><i class="fa fa-comment-o"></i></button></div></body></html>
