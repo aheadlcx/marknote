@@ -8,6 +8,8 @@
 	* [Android 架构](/androidnote/app/architeture.md)
 	* [Android性能优化](/androidnote/app/performance.md)
 	* [热修复](/androidnote/app/hotfix.md)
+	* [重复代码检测](/androidnote/app/pmd.md)
+	* [无痕埋点之Javassist](/androidnote/app/javassist.md)
 
 * Android Framework Ui analyze
 	* [列表优化](/androidnote/app/listview.md)
@@ -35,7 +37,12 @@
 * Java Base Knowledge
 	* [Java Reflection 为何慢](/javanote/reflection.md)
 	* [RxJava 常用操作符](/javanote/commonRxJavaOperator.md)
-	* [线程的状态](/javanote/threadstate/md)
+	* [线程的状态](/javanote/threadstate.md)
+	* [线性安全](/javanote/datasafe.md)
+
+* 设计模式
+	* [对象池模式](/javanote/designmode/objectpool.md)
+	
 * [Android Base 知识点](/androidnote/app/androidbase.md)
 * Android 特殊问题
 	* [Toast 出发的 Adding window failed](/androidnote/app/TransactionTooLargeException.md)

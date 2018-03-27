@@ -1,6 +1,7 @@
 ## Android 上面遇到的特殊问题 --  Toast 引起的 TransactionTooLargeException
 
 [Google 关于 TransactionTooLargeException](https://developer.android.com/reference/android/os/TransactionTooLargeException.html)
+[Android TransactionTooLargeException 排查和定位](http://blog.csdn.net/self_study/article/details/60136277)
 
 bug log 如下
 
@@ -72,3 +73,5 @@ timestamp:1479975811523 record size:0numTrySend=1;;isAppUpgradeFirstStart=true;;
 ````
 
 实际上的情况，传递的参数太多，这个理论上，不会存在，不过也应该进行检测，hook ServiceManager 相关的 binder 就可以了。更多的可能是 FD 被关闭了。例如一些 File 没有正常的关闭，后面才关闭。类似的情况.
+
+setView 过程，最后是生成了 2个 socket ，用于应用进程和系统进程通讯，InputEvent 之类的，就是这样传递过来的了。
