@@ -52,6 +52,7 @@ java内存模型
 
 
 #### SparseArray 和 ArrayMap 代替 HashMap
+[参考文章](https://blog.csdn.net/u010687392/article/details/47809295)
 
 + SparseArray ，采用2个数组来储存。一个 key 数组，一个 value 数组。key 是升序排序的。查找 key 是，二分法。
 + ArrayMap ，采用2个数组来储存。一个 key 的 hash 数组，一个是 key 和 value ，依次排序的数组。查找 key 是，二分法。

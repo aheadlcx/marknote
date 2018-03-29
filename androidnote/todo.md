@@ -7,4 +7,12 @@
     * 基本容器，treemap 是怎么实现的。有哪些简单树，可以排序的。
     * ReaderThread 优化页面启动速度
     * ReaderThread 怎么提高页面进入速度
+    * 数据库大量插入，查询，怎么快。
+    * 数据库，基础组件是什么
+    * 推送达到率
+    * 进程保活
+    * Socket 保活
+    * 亮点
+    * AIDL in out 区别
+    * add toast 怎么多了一个 Socket 
 
